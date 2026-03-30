@@ -1,0 +1,18 @@
+[
+  {
+    "path": "src/i18n/en.ts",
+    "checksum": "c7186e9419c6faf1f6190989d23ab2fed37cd4fd"
+  },
+  {
+    "path": "src/i18n/ko.ts",
+    "checksum": "d1b6bbc13669b0b210bb4820d4b8e72fd97f30c7"
+  },
+  {
+    "path": "src/i18n/sd.generated.ts",
+    "checksum": "77795c086bf60450824933ec717044a2eb94fc78"
+  },
+  {
+    "path": "src/sonamu.config.ts",
+    "checksum": "48baf59b177f0463e5dbeaabf6a868a871f2ab6b"
+  }
+]

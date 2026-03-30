@@ -1,0 +1,50 @@
+{
+  "name": "ByCC-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Sonamu web client",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@sonamu-kit/react-components": "^0.2.3",
+    "@tanstack/react-query": "^5.90.12",
+    "@tanstack/react-router": "1.143.11",
+    "axios": "^1.13.2",
+    "better-auth": "~1.4.18",
+    "clsx": "^2.1.1",
+    "dotenv": "^16",
+    "eventsource": "^4.1.0",
+    "jotai": "^2.14.0",
+    "qs": "^6.14.1",
+    "radashi": "^12.2.0",
+    "react": "^19.2.3",
+    "react-day-picker": "^8.10.1",
+    "react-dom": "^19.2.3",
+    "tailwind-merge": "^3.4.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@iconify-json/lucide": "^1.2.82",
+    "@svgr/core": "^8.1.0",
+    "@svgr/plugin-jsx": "^8.1.0",
+    "@svgr/plugin-svgo": "^8.1.0",
+    "@tailwindcss/postcss": "^4.0.0",
+    "@tailwindcss/vite": "^4.1.17",
+    "@tanstack/react-router-devtools": "1.143.11",
+    "@tanstack/router-plugin": "1.143.11",
+    "@types/node": "25.0.7",
+    "@types/qs": "^6.14.0",
+    "@types/react": "^19.2.7",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react-swc": "^4.1.3",
+    "sass": "^1.92.1",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.9.3",
+    "unplugin-icons": "0.20.2",
+    "vite": "7.3.0"
+  }
+}
