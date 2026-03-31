@@ -39,11 +39,12 @@
     "knex": "^3.1.0",
     "pg": "^8.16.3",
     "radashi": "^12.2.0",
-    "sonamu": "^0.8.20",
+    "sonamu": "^0.8.21",
     "zod": "^4.3.6"
   },
   "devDependencies": {
     "@fastify/compress": "^7.0.3",
+    "@iconify-json/lucide": "catalog:",
     "@swc/cli": "^0.7.8",
     "@types/bcrypt": "^6",
     "@types/node": "25.0.7",

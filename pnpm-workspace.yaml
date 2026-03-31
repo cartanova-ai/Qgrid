@@ -34,7 +34,7 @@ catalog:
   "@fastify/passport": ^2.2.0
   "@fastify/static": ^7
   "@hookform/resolvers": ^5.2.2
-  "@iconify-json/lucide": ^1.2.82
+  "@iconify-json/lucide": ^1.2.100
   "@iconify-json/mdi": ^1.2.3
   "@iconify/json": ^2.2.421
   "@iconify/react": ^6.0.2

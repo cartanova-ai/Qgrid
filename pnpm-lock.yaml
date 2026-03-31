@@ -4,6 +4,12 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+catalogs:
+  default:
+    '@iconify-json/lucide':
+      specifier: ^1.2.100
+      version: 1.2.100
+
 overrides:
   axios@<0.30.0: '>=0.30.0'
   axios@<0.30.2: '>=0.30.2'
@@ -94,8 +100,8 @@ importers:
         specifier: ^12.2.0
         version: 12.7.2
       sonamu:
-        specifier: ^0.8.20
-        version: 0.8.20(ec8592e71571370fa7d450725687f472)
+        specifier: ^0.8.21
+        version: 0.8.22(ec8592e71571370fa7d450725687f472)
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -103,6 +109,9 @@ importers:
       '@fastify/compress':
         specifier: ^7.0.3
         version: 7.0.3
+      '@iconify-json/lucide':
+        specifier: 'catalog:'
+        version: 1.2.100
       '@swc/cli':
         specifier: ^0.7.8
         version: 0.7.10(@swc/core@1.15.21)(chokidar@4.0.3)
@@ -5458,8 +5467,8 @@ packages:
   solid-js@1.9.12:
     resolution: {integrity: sha512-QzKaSJq2/iDrWR1As6MHZQ8fQkdOBf8GReYb7L5iKwMGceg7HxDcaOHk0at66tNgn9U2U7dXo8ZZpLIAmGMzgw==}
 
-  sonamu@0.8.20:
-    resolution: {integrity: sha512-P/nSXoAf+F5VG/i5ztp3Xx+vpmZjczUwxzylrdhdGc2GvC8iwkwifOpQiuqGj9hHhb29/NHWMwuFYhShYi2HEA==}
+  sonamu@0.8.22:
+    resolution: {integrity: sha512-4VgRJJkwUbucubnhUE1VHseZbNzKB5zgHCmhDackN3ydhgmpJFAdmMa5yN29PQh7o4IfB4UMOS/gDHs7labMpA==}
     hasBin: true
     peerDependencies:
       '@ai-sdk/anthropic': ^3.0.0
@@ -11771,7 +11780,7 @@ snapshots:
       seroval: 1.5.1
       seroval-plugins: 1.5.1(seroval@1.5.1)
 
-  sonamu@0.8.20(ec8592e71571370fa7d450725687f472):
+  sonamu@0.8.22(ec8592e71571370fa7d450725687f472):
     dependencies:
       '@aws-sdk/client-s3': 3.1019.0
       '@aws-sdk/lib-storage': 3.1019.0(@aws-sdk/client-s3@3.1019.0)
