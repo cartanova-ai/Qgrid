@@ -6,82 +6,9 @@ Anthropic API 키(토큰 과금) 대신 **구독 정액제 크레딧**으로 LLM
 
 ---
 
-## 어떻게 동작하는가
+## 사용 예시
 
-```
-팀원 프로젝트 (Node.js / Python / 뭐든)
-  → POST http://bycc:44900/api/bycc/query
-  ← { text, usage, durationMs, costUsd }
-
-ByCC 서버 (Docker 컨테이너)
-  └── ClaudePool (멀티 토큰 프로세스 풀)
-        ├── Worker A-0 (token=계정A) → claude CLI 프로세스
-        ├── Worker A-1 (token=계정A) → claude CLI 프로세스
-        ├── Worker B-0 (token=계정B) → claude CLI 프로세스
-        └── Worker B-1 (token=계정B) → claude CLI 프로세스
-```
-
-- HTTP 요청 하나로 LLM 호출 (언어 무관)
-- N개 계정 토큰을 등록하면 쿼터를 풀링
-- 한 토큰이 쿼터 소진되면 자동으로 다른 토큰으로 failover (호출자는 모름)
-
----
-
-## 시작하기
-
-### 1. 클론 + 설치
-
-```bash
-git clone git@github.com:CartaNova-AI/ByCC.git
-cd ByCC
-pnpm install
-```
-
-### 2. 토큰 발급
-
-각 팀원이 자기 Claude Max/Team 계정에서 long-lived 토큰을 발급:
-
-```bash
-claude setup-token
-```
-
-### 3. 서버 시작
-
-```bash
-# Docker (권장)
-docker compose up -d
-
-# 개발 모드
-pnpm -C packages/api sonamu dev
-```
-
-### 4. 토큰 등록
-
-브라우저에서 `http://localhost:44900` 접속 → Tokens 페이지에서 추가.
-
-또는 API로:
-
-```bash
-curl -X POST http://localhost:44900/api/bycc/addToken \
-  -H 'Content-Type: application/json' \
-  -d '{"token": "sk-ant-oat01-..."}'
-```
-
-### 5. 사용
-
-```bash
-curl -X POST http://localhost:44900/api/bycc/query \
-  -H 'Content-Type: application/json' \
-  -d '{"prompt": "What is 1+1?", "system": "Reply in one word."}'
-```
-
----
-
-## 다른 프로젝트에서 사용
-
-### TypeScript SDK
-
-`packages/api/src/sdk/bycc.ts`를 프로젝트에 복사:
+`packages/api/src/sdk/bycc.ts`를 프로젝트에 복사해서 사용합니다. (의존성: `zod`)
 
 ```typescript
 import { generateByCC } from "./bycc";
@@ -101,11 +28,82 @@ const { json } = await generateByCC({
 json.questions // string[]
 ```
 
-의존성: `zod`
+---
 
-환경변수: `BYCC_URL` (기본: `http://localhost:44900`)
+## 시작하기
 
-### 배포 환경
+### 1. 클론 + 설치
+
+```bash
+git clone git@github.com:CartaNova-AI/ByCC.git
+cd ByCC
+pnpm install
+```
+
+### 2. 토큰 발급
+
+각 팀원이 자기 Claude Max/Team 계정에서 long-lived 토큰 발급:
+
+```bash
+claude setup-token
+```
+
+### 3. DB 준비
+
+ByCC는 데이터베이스를 사용하지 않지만, Sonamu 프레임워크가 시작 시 DB 연결을 필수로 요구합니다.
+팀 공용 또는 로컬 PostgreSQL에 빈 DB를 만들어주세요:
+
+```bash
+createdb -h localhost -p 5444 -U postgres bycc
+```
+
+### 4. 서버 시작
+
+```bash
+# Docker (권장)
+docker compose up -d --build
+
+# 개발 모드 (Docker 없이)
+pnpm -C packages/api sonamu dev
+```
+
+### 5. 토큰 등록
+
+브라우저에서 `http://localhost:44900` 접속 → Tokens 페이지에서 추가.
+
+또는 API로:
+
+```bash
+curl -X POST http://localhost:44900/api/bycc/addToken \
+  -H 'Content-Type: application/json' \
+  -d '{"token": "sk-ant-oat01-..."}'
+```
+
+---
+
+## 어떻게 동작하는가
+
+```
+팀원 프로젝트 (Node.js / Python / 뭐든)
+  → POST http://bycc:44900/api/bycc/query
+  ← { text, usage, durationMs, costUsd }
+
+ByCC 서버 (Docker 컨테이너)
+  └── ClaudePool (멀티 토큰 프로세스 풀)
+        ├── Worker A-0 (token=계정A) → claude CLI 프로세스
+        ├── Worker A-1 (token=계정A) → claude CLI 프로세스
+        ├── Worker B-0 (token=계정B) → claude CLI 프로세스
+        └── Worker B-1 (token=계정B) → claude CLI 프로세스
+```
+
+- N개 계정 토큰을 등록하면 쿼터를 풀링
+- 가장 여유있는 워커에 요청을 배정 (least-queue-depth)
+- 한 토큰이 쿼터 소진되면 자동으로 다른 토큰으로 failover (호출자는 모름)
+- 프로세스당 500콜 후 자동 재시작 (1M 컨텍스트 한계 방지)
+
+---
+
+## 배포
 
 앱의 docker-compose에 bycc 서비스를 추가:
 
@@ -119,30 +117,16 @@ services:
     build: ./ByCC
     volumes:
       - ~/.bycc:/root/.bycc:ro
+    environment:
+      DB_HOST: your-postgres-host
+      DB_PASSWORD: your-password
+      DB_NAME: bycc
 ```
 
 ---
 
-### PostgreSQL 의존성
+## 주의사항
 
-**ByCC는 데이터베이스를 사용하지 않습니다.** 토큰은 JSON 파일로 관리하고, 사용량은 인메모리 카운터입니다. 다만 Sonamu 프레임워크가 시작 시 DB 연결을 필수로 요구하기 때문에, 접속 가능한 PostgreSQL이 필요합니다. ByCC가 DB에 쿼리를 보내거나 데이터를 저장하지는 않습니다.
-
-팀 공용 PostgreSQL이 있으면 거기에 빈 DB(`bycc`)를 만들어서 사용하면 됩니다:
-
-```bash
-# 팀 공용 postgres에 빈 DB 생성
-createdb -h dev0-host -U postgres bycc
-
-# 환경변수로 지정
-DB_HOST=dev0-host DB_PASSWORD=xxx docker compose up -d
-```
-
-또는 `.env` 파일에 설정:
-
-```
-DB_HOST=dev0-host
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=xxx
-DB_NAME=bycc
-```
+- **쿼터 리셋**: Claude Max 5시간 rolling window. 소진된 토큰은 웹 UI에서 수동 재활성화
+- **PostgreSQL 필수**: ByCC는 DB를 사용하지 않지만 Sonamu가 시작 시 연결을 요구합니다. 빈 DB만 있으면 됩니다.
+- **macOS Docker**: `DB_HOST`가 기본 `host.docker.internal` (호스트 머신의 localhost를 가리킴). Linux에서는 `network_mode: host` 사용
