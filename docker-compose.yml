@@ -9,23 +9,11 @@ services:
       NODE_ENV: production
       HOST: "0.0.0.0"
       PORT: "44900"
-      DB_HOST: db
-      DB_PORT: "5432"
-      DB_USER: postgres # mockDB 사용
-      DB_PASSWORD: bycc # mockDB 사용
-      DB_NAME: bycc # mockDB 사용
-    depends_on:
-      - db
+      # DB는 사용하지 않지만 Sonamu 시작 시 연결 필수입니다
+      # 팀 공용 postgres 또는 로컬 postgres 주소를 지정
+      DB_HOST: ${DB_HOST:-localhost}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-postgres}
+      DB_PASSWORD: ${DB_PASSWORD:-1234}
+      DB_NAME: ${DB_NAME:-bycc}
     restart: unless-stopped
-
-  db:
-    image: postgres:17
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: bycc
-      POSTGRES_DB: bycc
-    volumes:
-      - bycc-db:/var/lib/postgresql/data
-
-volumes:
-  bycc-db:
