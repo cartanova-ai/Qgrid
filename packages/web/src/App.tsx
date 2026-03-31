@@ -21,9 +21,9 @@ function App({ children }: AppProps) {
   const showSidebar = !hideSidebarPaths.includes(pathname);
 
   return (
-    <div className="flex h-screen w-full bg-white">
+    <div className="flex h-screen w-full bg-white overflow-auto">
       {showSidebar && <Sidebar />}
-      <main className="flex-1 overflow-auto p-4 md:p-8">
+      <main className="flex-1 p-4 md:p-8">
         <Suspense
           fallback={<div className="text-sand-400 text-center py-8 text-sm">로딩 중...</div>}
         >

@@ -2,6 +2,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import type { TokenStats } from "@/services/bycc/bycc.types";
 import { ByccService } from "@/services/services.generated";
+import CheckIcon from "~icons/lucide/check";
+import CopyIcon from "~icons/lucide/copy";
 import EyeIcon from "~icons/lucide/eye";
 import EyeOffIcon from "~icons/lucide/eye-off";
 import PencilIcon from "~icons/lucide/pencil";
@@ -19,6 +21,7 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
   const [editName, setEditName] = useState("");
   const [editToken, setEditToken] = useState("");
   const [showEditToken, setShowEditToken] = useState(false);
+  const [copiedToken, setCopiedToken] = useState(false);
 
   const queryClient = useQueryClient();
   const removeMutation = ByccService.useRemoveTokenMutation();
@@ -36,6 +39,7 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
     setEditName(token.name ?? "");
     setEditToken("");
     setShowEditToken(false);
+    setCopiedToken(false);
   };
 
   const handleUpdate = async () => {
@@ -47,6 +51,13 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
     });
     await queryClient.invalidateQueries({ queryKey: ["Bycc"] });
     setEditTarget(null);
+  };
+
+  const handleCopyToken = () => {
+    if (!editTarget) return;
+    navigator.clipboard.writeText(editTarget.token);
+    setCopiedToken(true);
+    setTimeout(() => setCopiedToken(false), 1500);
   };
 
   if (isLoading) {
@@ -88,7 +99,7 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
               <th className="text-right px-5 py-3 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
                 Requests
               </th>
-              <th className="w-20 px-3 py-3" />
+              <th className="w-16 px-3 py-3" />
             </tr>
           </thead>
           <tbody className="divide-y divide-sand-200/60">
@@ -141,16 +152,15 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
 
       {/* Edit Modal */}
       {editTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
           <div
-            className="absolute inset-0 bg-sand-900/40"
+            className="absolute inset-0"
             onClick={() => setEditTarget(null)}
             onKeyDown={() => {}}
           />
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-sm mx-4">
             <div className="px-5 py-4 border-b border-sand-100">
               <h3 className="text-base font-medium text-sand-900">Edit Token</h3>
-              <code className="text-[11px] font-mono text-sand-500">{editTarget.token}</code>
             </div>
             <div className="px-5 py-4 space-y-3">
               <div>
@@ -170,33 +180,58 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
                 />
               </div>
               <div>
-                <label
-                  htmlFor="token-value"
-                  className="text-[10px] uppercase tracking-wider text-sand-500 font-medium"
-                >
-                  Token (leave empty to keep current)
-                </label>
-                <div className="relative mt-1">
-                  <input
-                    id="token-value"
-                    type={showEditToken ? "text" : "password"}
-                    value={editToken}
-                    onChange={(e) => setEditToken(e.target.value)}
-                    placeholder="Paste new OAuth token"
-                    className="w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300 pr-10"
-                  />
-                  <button
-                    type="button"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-sand-400 hover:text-sand-600 transition-colors duration-150"
-                    onClick={() => setShowEditToken(!showEditToken)}
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="token-value"
+                    className="text-[10px] uppercase tracking-wider text-sand-500 font-medium"
                   >
-                    {showEditToken ? (
-                      <EyeOffIcon className="size-4" />
-                    ) : (
-                      <EyeIcon className="size-4" />
-                    )}
-                  </button>
+                    Token
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-sand-400 hover:text-sienna-500 transition-colors duration-150"
+                      onClick={handleCopyToken}
+                    >
+                      {copiedToken ? (
+                        <>
+                          <CheckIcon className="size-3 text-sage-500" />
+                          <span className="text-sage-500">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <CopyIcon className="size-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-sand-400 hover:text-sand-600 transition-colors duration-150"
+                      onClick={() => setShowEditToken(!showEditToken)}
+                    >
+                      {showEditToken ? (
+                        <>
+                          <EyeOffIcon className="size-3" />
+                          <span>Hide</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeIcon className="size-3" />
+                          <span>Show</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
+                <input
+                  id="token-value"
+                  type={showEditToken ? "text" : "password"}
+                  value={editToken}
+                  onChange={(e) => setEditToken(e.target.value)}
+                  placeholder={showEditToken ? editTarget.token : "●●●●●●●●●●●●●●●●"}
+                  className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-400 focus:outline-none focus:border-sienna-300"
+                />
               </div>
             </div>
             <div className="px-5 py-3 border-t border-sand-100 flex items-center justify-end gap-2">
@@ -222,9 +257,9 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
 
       {/* Delete Confirmation */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
           <div
-            className="absolute inset-0 bg-sand-900/40"
+            className="absolute inset-0"
             onClick={() => setDeleteTarget(null)}
             onKeyDown={() => {}}
           />

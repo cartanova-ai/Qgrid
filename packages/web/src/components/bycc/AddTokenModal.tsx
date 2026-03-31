@@ -53,9 +53,8 @@ export function AddTokenModal() {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-sand-900/40" onClick={close} onKeyDown={() => {}} />
+        <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+          <div className="absolute inset-0" onClick={close} onKeyDown={() => {}} />
 
           {/* Modal */}
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
