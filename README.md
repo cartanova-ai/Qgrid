@@ -123,6 +123,26 @@ services:
 
 ---
 
-### PostgreSQL에 대해
+### PostgreSQL 의존성
 
-docker-compose에 PostgreSQL이 포함되어 있지만, **ByCC는 데이터베이스를 사용하지 않습니다.** 토큰은 JSON 파일로 관리하고, 사용량은 인메모리 카운터입니다. PostgreSQL은 Sonamu 프레임워크가 시작 시 DB 연결을 필수로 요구하기 때문에 빈 DB를 띄워놓는 것뿐입니다. ByCC가 DB에 쿼리를 보내거나 데이터를 저장하지 않습니다.
+**ByCC는 데이터베이스를 사용하지 않습니다.** 토큰은 JSON 파일로 관리하고, 사용량은 인메모리 카운터입니다. 다만 Sonamu 프레임워크가 시작 시 DB 연결을 필수로 요구하기 때문에, 접속 가능한 PostgreSQL이 필요합니다. ByCC가 DB에 쿼리를 보내거나 데이터를 저장하지는 않습니다.
+
+팀 공용 PostgreSQL이 있으면 거기에 빈 DB(`bycc`)를 만들어서 사용하면 됩니다:
+
+```bash
+# 팀 공용 postgres에 빈 DB 생성
+createdb -h dev0-host -U postgres bycc
+
+# 환경변수로 지정
+DB_HOST=dev0-host DB_PASSWORD=xxx docker compose up -d
+```
+
+또는 `.env` 파일에 설정:
+
+```
+DB_HOST=dev0-host
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=xxx
+DB_NAME=bycc
+```
