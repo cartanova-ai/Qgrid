@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as TokensRouteImport } from './routes/tokens'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RequestsShowRouteImport } from './routes/requests/show'
 
 const TokensRoute = TokensRouteImport.update({
   id: '/tokens',
@@ -22,31 +23,40 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const RequestsShowRoute = RequestsShowRouteImport.update({
+  id: '/requests/show',
+  path: '/requests/show',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/tokens': typeof TokensRoute
+  '/requests/show': typeof RequestsShowRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/tokens': typeof TokensRoute
+  '/requests/show': typeof RequestsShowRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/tokens': typeof TokensRoute
+  '/requests/show': typeof RequestsShowRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/tokens'
+  fullPaths: '/' | '/tokens' | '/requests/show'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/tokens'
-  id: '__root__' | '/' | '/tokens'
+  to: '/' | '/tokens' | '/requests/show'
+  id: '__root__' | '/' | '/tokens' | '/requests/show'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   TokensRoute: typeof TokensRoute
+  RequestsShowRoute: typeof RequestsShowRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -65,12 +75,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/requests/show': {
+      id: '/requests/show'
+      path: '/requests/show'
+      fullPath: '/requests/show'
+      preLoaderRoute: typeof RequestsShowRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   TokensRoute: TokensRoute,
+  RequestsShowRoute: RequestsShowRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

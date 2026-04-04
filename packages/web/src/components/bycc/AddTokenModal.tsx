@@ -23,7 +23,7 @@ export function AddTokenModal() {
     try {
       const result = await addMutation.mutateAsync({
         token: trimmed,
-        name: name.trim() || undefined,
+        name: name.trim(),
       });
       if (!result.added) {
         setError("이미 등록된 토큰입니다");

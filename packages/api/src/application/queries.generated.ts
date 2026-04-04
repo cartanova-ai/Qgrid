@@ -17,6 +17,25 @@ function createSSRQuery(
   return { modelName, methodName, params, serviceKey, __brand: "SSRQuery" } as SSRQuery;
 }
 
+import { RequestLogListParams } from "./request-log/request-log.types";
+import { RequestLogSubsetKey } from "./sonamu.generated";
+
+export namespace RequestLogService {
+  export const getRequestLog = <T extends RequestLogSubsetKey>(subset: T, id: number): SSRQuery =>
+    createSSRQuery("RequestLogModel", "findById", [subset, id], ["RequestLog", "getRequestLog"]);
+
+  export const getRequestLogs = <T extends RequestLogSubsetKey, LP extends RequestLogListParams>(
+    subset: T,
+    rawParams?: LP,
+  ): SSRQuery =>
+    createSSRQuery(
+      "RequestLogModel",
+      "findMany",
+      [subset, rawParams],
+      ["RequestLog", "getRequestLogs"],
+    );
+}
+
 export namespace ByccService {
   export const stats = (): SSRQuery => createSSRQuery("ByccFrame", "stats", [], ["Bycc", "stats"]);
 

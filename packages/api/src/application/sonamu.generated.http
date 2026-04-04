@@ -1,6 +1,60 @@
 # @generated
 # 직접 수정하지 마세요.
 
+GET {{baseUrl}}/api/requestLog/findById
+	?subset=A
+	&id=0
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}/api/requestLog/findMany
+	?subset=A
+	&rawParams[num]=24
+	&rawParams[page]=1
+	&rawParams[search]=id
+	&rawParams[keyword]=KEYWORD
+	&rawParams[orderBy]=id-desc
+	&rawParams[queryMode]=both
+	&rawParams[id]=0
+	&rawParams[sonamuFilter]=unknown-custom
+	&rawParams[token_name]=TOKEN_NAME
+Content-Type: application/json
+
+###
+
+POST {{baseUrl}}/api/requestLog/save
+Content-Type: application/json
+
+{
+  "spa": [
+    {
+      "id": 0,
+      "created_at": "2000-01-01",
+      "token_name": "TOKEN_NAME",
+      "query": "QUERY",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_creation_tokens": 0,
+      "duration_ms": 0
+    }
+  ]
+}
+
+###
+
+POST {{baseUrl}}/api/requestLog/del
+Content-Type: application/json
+
+{
+  "ids": [
+    0
+  ]
+}
+
+###
+
 POST {{baseUrl}}/api/bycc/query
 Content-Type: application/json
 

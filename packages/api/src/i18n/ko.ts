@@ -41,11 +41,13 @@ export default {
   "error.alreadyProcessed": "이미 처리되었습니다",
   "error.badRequest": "잘못된 요청입니다",
   "error.duplicateRow": "중복된 데이터입니다",
+  "error.entityNotFound": (name: string, id: number | string) => `존재하지 않는 ${name} ID ${id}`,
   "error.forbidden": "권한이 없습니다",
   "error.internalServerError": "서버 오류가 발생했습니다",
   "error.notFound": "찾을 수 없습니다",
   "error.serviceUnavailable": "서비스를 사용할 수 없습니다",
   "error.unauthorized": "인증이 필요합니다",
+  "error.unknownSearchField": (field: string) => `구현되지 않은 검색 필드 ${field}`,
   notFound: (name: string, id: number) => `존재하지 않는 ${name} ID ${id}`,
   "validation.email": "올바른 이메일 형식이 아닙니다",
   "validation.maxLength": (field: string, max: number) =>
@@ -54,4 +56,4 @@ export default {
     `${field}${josa(field, "은는")} 최소 ${min}자 이상이어야 합니다`,
   "validation.required": (field: string) => `${josa(field, "은는")} 필수입니다`,
   "validation.url": "올바른 URL 형식이 아닙니다",
-};
+} as const;

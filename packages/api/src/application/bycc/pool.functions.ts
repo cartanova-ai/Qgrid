@@ -9,7 +9,6 @@
  */
 import type { CliResult, PoolConfig, QueryInput, TokenStats } from "./bycc.types";
 import { QuotaError } from "./bycc.types";
-import { getQuotaStatus, recordUsage } from "./quota.functions";
 import { addTokenToFile, loadTokens, removeTokenFromFile } from "./tokens.functions";
 import { Worker, type WorkerConfig } from "./worker.functions";
 
@@ -17,6 +16,7 @@ class ClaudePool {
   workers = new Map<string, Worker[]>();
   quotaExhausted = new Set<string>();
   requestCounts = new Map<string, number>();
+  lastUsedToken = "";
   size: number;
   model: string;
   timeout: number;
@@ -55,7 +55,6 @@ class ClaudePool {
       name: entries.find((e) => e.token === token)?.name,
       requests: this.requestCounts.get(token) ?? 0,
       active: !this.quotaExhausted.has(token),
-      quota: getQuotaStatus(token),
     }));
   }
 
@@ -84,19 +83,8 @@ class ClaudePool {
 
       try {
         const result = await worker.query(input, timeoutMs);
+        this.lastUsedToken = worker.tokenId;
         this.requestCounts.set(worker.tokenId, (this.requestCounts.get(worker.tokenId) ?? 0) + 1);
-
-        // best-effort: usage 기록 실패해도 쿼리 결과는 반환
-        try {
-          recordUsage(
-            worker.tokenId,
-            result.usage.input_tokens,
-            result.usage.output_tokens,
-            result.costUsd,
-          );
-        } catch (e) {
-          console.error("recordUsage failed:", e);
-        }
 
         return result;
       } catch (err) {

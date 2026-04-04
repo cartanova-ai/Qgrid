@@ -47,21 +47,11 @@ export const RemoveTokenInput = z.object({
 });
 export type RemoveTokenInput = z.infer<typeof RemoveTokenInput>;
 
-export const QuotaInfo = z.object({
-  total: z.number(),
-  percent: z.number(),
-  resetsIn: z.number(),
-  requests: z.number(),
-  costUsd: z.number(),
-});
-export type QuotaInfo = z.infer<typeof QuotaInfo>;
-
 export const TokenStats = z.object({
   token: z.string(),
   name: z.string().optional(),
   requests: z.number(),
   active: z.boolean(),
-  quota: QuotaInfo.optional(),
 });
 export type TokenStats = z.infer<typeof TokenStats>;
 

@@ -8,9 +8,10 @@
  * GET    /api/bycc/health      — 헬스체크
  */
 import { api, BaseFrameClass } from "sonamu";
+import { RequestLogModel } from "../request-log/request-log.model";
 import type { CliResult, HealthResponse, TokenStats } from "./bycc.types";
 import { pool } from "./pool.functions";
-import { getTokenFilePath, updateTokenInFile } from "./tokens.functions";
+import { getTokenFilePath, loadTokens, updateTokenInFile } from "./tokens.functions";
 
 class ByccFrameClass extends BaseFrameClass {
   constructor() {
@@ -19,7 +20,23 @@ class ByccFrameClass extends BaseFrameClass {
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })
   async query(prompt: string, system?: string, timeout?: number): Promise<CliResult> {
-    return pool.query({ system, prompt }, timeout);
+    const result = await pool.query({ system, prompt }, timeout);
+
+    // 로그 기록 실패해도 쿼리 결과는 반환
+    const tokenEntry = loadTokens().find((e) => e.token === pool.lastUsedToken);
+    RequestLogModel.save([
+      {
+        token_name: tokenEntry?.name ?? "Unknown",
+        query: system ? `[System]\n${system}\n\n[User]\n${prompt}` : prompt,
+        input_tokens: result.usage.input_tokens,
+        output_tokens: result.usage.output_tokens,
+        cache_read_tokens: result.usage.cache_read_input_tokens,
+        cache_creation_tokens: result.usage.cache_creation_input_tokens,
+        duration_ms: result.durationMs,
+      },
+    ]).catch((e) => console.error("requestLog save failed:", e));
+
+    return result;
   }
 
   @api({ httpMethod: "GET", clients: ["axios", "tanstack-query"] })

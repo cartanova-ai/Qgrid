@@ -15,6 +15,8 @@ import {
 import type { AxiosProgressEvent } from "axios";
 import qs from "qs";
 import { CliResult, HealthResponse, TokenStats } from "./bycc/bycc.types";
+import { RequestLogListParams, RequestLogSaveParams } from "./request-log/request-log.types";
+import { RequestLogSubsetKey, RequestLogSubsetMapping } from "./sonamu.generated";
 import {
   type EventHandlers,
   type FilterQuery,
@@ -24,6 +26,92 @@ import {
   toFormData,
   useSSEStream,
 } from "./sonamu.shared";
+
+export namespace RequestLogService {
+  export async function getRequestLog<T extends RequestLogSubsetKey>(
+    subset: T,
+    id: number,
+  ): Promise<RequestLogSubsetMapping[T]> {
+    return fetch({
+      method: "GET",
+      url: `/api/requestLog/findById?${qs.stringify({ subset, id })}`,
+    });
+  }
+
+  export const getRequestLogQueryOptions = <T extends RequestLogSubsetKey>(subset: T, id: number) =>
+    queryOptions({
+      queryKey: ["RequestLog", "getRequestLog", subset, id],
+      queryFn: () => getRequestLog(subset, id),
+    });
+
+  export const useRequestLog = <T extends RequestLogSubsetKey>(
+    subset: T,
+    id: number,
+    options?: { enabled?: boolean },
+  ) =>
+    useQuery({
+      ...getRequestLogQueryOptions(subset, id),
+      ...options,
+    });
+
+  export async function getRequestLogs<
+    T extends RequestLogSubsetKey,
+    LP extends RequestLogListParams,
+  >(subset: T, rawParams?: LP): Promise<ListResult<LP, RequestLogSubsetMapping[T]>> {
+    return fetch({
+      method: "GET",
+      url: `/api/requestLog/findMany?${qs.stringify({ subset, rawParams })}`,
+    });
+  }
+
+  export const getRequestLogsQueryOptions = <
+    T extends RequestLogSubsetKey,
+    LP extends RequestLogListParams,
+  >(
+    subset: T,
+    rawParams?: LP,
+  ) =>
+    queryOptions({
+      queryKey: ["RequestLog", "getRequestLogs", subset, rawParams],
+      queryFn: () => getRequestLogs(subset, rawParams),
+    });
+
+  export const useRequestLogs = <T extends RequestLogSubsetKey, LP extends RequestLogListParams>(
+    subset: T,
+    rawParams?: LP,
+    options?: { enabled?: boolean },
+  ) =>
+    useQuery({
+      ...getRequestLogsQueryOptions(subset, rawParams),
+      ...options,
+    });
+
+  export async function save(spa: RequestLogSaveParams[]): Promise<number[]> {
+    return fetch({
+      method: "POST",
+      url: `/api/requestLog/save`,
+      data: { spa },
+    });
+  }
+
+  export const useSaveMutation = () =>
+    useMutation({
+      mutationFn: (params: { spa: RequestLogSaveParams[] }) => save(params.spa),
+    });
+
+  export async function del(ids: number[]): Promise<number> {
+    return fetch({
+      method: "POST",
+      url: `/api/requestLog/del`,
+      data: { ids },
+    });
+  }
+
+  export const useDelMutation = () =>
+    useMutation({
+      mutationFn: (params: { ids: number[] }) => del(params.ids),
+    });
+}
 
 export namespace ByccService {
   export async function query(
@@ -126,3 +214,13 @@ export namespace ByccService {
       ...options,
     });
 }
+
+// AsyncIdConfig: RequestLog
+export const RequestLogAsyncIdConfig: AsyncIdConfig<
+  RequestLogSubsetKey,
+  RequestLogSubsetMapping,
+  RequestLogListParams
+> = {
+  placeholderKey: "entity.RequestLog",
+  useList: RequestLogService.useRequestLogs,
+};

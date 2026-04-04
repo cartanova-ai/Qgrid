@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { HealthCard } from "@/components/bycc/HealthCard";
-import { QuotaCard } from "@/components/bycc/QuotaCard";
+import { RequestLogTable } from "@/components/bycc/RequestLogTable";
 import { ByccService } from "@/services/services.generated";
 
 export const Route = createFileRoute("/")({
@@ -13,7 +13,6 @@ function Dashboard() {
     isLoading: healthLoading,
     isError: healthError,
   } = ByccService.useHealth();
-  const { data: statsData, isLoading: statsLoading } = ByccService.useStats();
 
   return (
     <div className="space-y-5 max-w-300 mx-auto -translate-x-4">
@@ -23,10 +22,10 @@ function Dashboard() {
 
       <div>
         <span className="text-[10px] uppercase tracking-wider text-sand-500 font-medium">
-          Token Quota (5h window)
+          Request Log
         </span>
         <div className="mt-2">
-          <QuotaCard data={statsData} isLoading={statsLoading} />
+          <RequestLogTable />
         </div>
       </div>
     </div>

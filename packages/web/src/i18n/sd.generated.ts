@@ -207,7 +207,22 @@ const rcKeysEn = {
 } as const;
 
 // entity.json에서 추출한 entity labels (defaultLocale 전용)
-const entityLabels = {} as const;
+const entityLabels = {
+  "entity.RequestLog": "RequestLog",
+  "entity.RequestLog.id": "ID",
+  "entity.RequestLog.created_at": "등록일시",
+  "entity.RequestLog.token_name": "토큰 이름",
+  "entity.RequestLog.query": "prompt 전문",
+  "entity.RequestLog.input_tokens": "입력 토큰",
+  "entity.RequestLog.output_tokens": "출력 토큰",
+  "entity.RequestLog.cache_read_tokens": "캐시 읽기 토큰",
+  "entity.RequestLog.cache_creation_tokens": "캐시 생성 토큰",
+  "entity.RequestLog.duration_ms": "응답 소요시간(ms)",
+  "enum.RequestLogOrderBy.id-desc": "ID최신순",
+  "enum.RequestLogSearchField.id": "ID",
+  "enum.RequestLogSearchField.token_name": "토큰이름",
+  "enum.RequestLogSearchField.query": "쿼리",
+} as const;
 
 // defaultLocale의 dictionary를 기준으로 키 추출
 type RCKeys = typeof rcKeysKo;
