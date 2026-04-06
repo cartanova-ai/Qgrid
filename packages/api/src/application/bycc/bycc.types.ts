@@ -55,6 +55,14 @@ export const TokenStats = z.object({
 });
 export type TokenStats = z.infer<typeof TokenStats>;
 
+// ─── OAuth ───
+
+export const OAuthLoginResult = z.object({
+  token: z.string(),
+  name: z.string(),
+});
+export type OAuthLoginResult = z.infer<typeof OAuthLoginResult>;
+
 // ─── Health ───
 
 export const HealthResponse = z.object({
