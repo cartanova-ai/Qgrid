@@ -12,6 +12,9 @@ import { z } from "zod";
 const TokenEntry = z.object({
   token: z.string(),
   name: z.string().optional(),
+  refreshToken: z.string().optional(),
+  expiresAt: z.number().optional(),
+  accountUuid: z.string().optional(),
   active: z.boolean().default(true),
   addedAt: z.string(),
 });
@@ -77,7 +80,13 @@ export function addTokenToFile(token: string, name?: string, dir?: string): Toke
 
 export function updateTokenInFile(
   token: string,
-  updates: { name?: string; token?: string },
+  updates: {
+    name?: string;
+    token?: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    accountUuid?: string;
+  },
   dir?: string,
 ): TokenEntry | null {
   const entries = loadTokens(dir);
@@ -86,6 +95,9 @@ export function updateTokenInFile(
 
   if (updates.name !== undefined) entry.name = updates.name;
   if (updates.token !== undefined) entry.token = updates.token;
+  if (updates.refreshToken !== undefined) entry.refreshToken = updates.refreshToken;
+  if (updates.expiresAt !== undefined) entry.expiresAt = updates.expiresAt;
+  if (updates.accountUuid !== undefined) entry.accountUuid = updates.accountUuid;
 
   saveTokens(entries, dir);
   return entry;
