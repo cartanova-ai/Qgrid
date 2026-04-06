@@ -103,6 +103,21 @@ Content-Type: application/json
 
 ###
 
+POST {{baseUrl}}/api/bycc/oauthLogin
+Content-Type: application/json
+
+{
+  "name": "NAME"
+}
+
+###
+
+GET {{baseUrl}}/api/bycc/usage
+	?tokenName=TOKENNAME
+Content-Type: application/json
+
+###
+
 GET {{baseUrl}}/api/bycc/health
 	?
 Content-Type: application/json

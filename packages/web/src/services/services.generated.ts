@@ -14,7 +14,13 @@ import {
 } from "@tanstack/react-query";
 import type { AxiosProgressEvent } from "axios";
 import qs from "qs";
-import { CliResult, HealthResponse, TokenStats } from "./bycc/bycc.types";
+import {
+  CliResult,
+  HealthResponse,
+  OAuthLoginResult,
+  TokenStats,
+  UsageResponse,
+} from "./bycc/bycc.types";
 import { RequestLogListParams, RequestLogSaveParams } from "./request-log/request-log.types";
 import { RequestLogSubsetKey, RequestLogSubsetMapping } from "./sonamu.generated";
 import {
@@ -193,6 +199,38 @@ export namespace ByccService {
   export const useRemoveTokenMutation = () =>
     useMutation({
       mutationFn: (params: { token: string }) => removeToken(params.token),
+    });
+
+  export async function oauthLogin(name: string): Promise<OAuthLoginResult> {
+    return fetch({
+      method: "POST",
+      url: `/api/bycc/oauthLogin`,
+      data: { name },
+    });
+  }
+
+  export const useOauthLoginMutation = () =>
+    useMutation({
+      mutationFn: (params: { name: string }) => oauthLogin(params.name),
+    });
+
+  export async function usage(tokenName?: string): Promise<UsageResponse> {
+    return fetch({
+      method: "GET",
+      url: `/api/bycc/usage?${qs.stringify({ tokenName })}`,
+    });
+  }
+
+  export const usageQueryOptions = (tokenName?: string) =>
+    queryOptions({
+      queryKey: ["Bycc", "usage", tokenName],
+      queryFn: () => usage(tokenName),
+    });
+
+  export const useUsage = (tokenName?: string, options?: { enabled?: boolean }) =>
+    useQuery({
+      ...usageQueryOptions(tokenName),
+      ...options,
     });
 
   export async function health(): Promise<HealthResponse> {

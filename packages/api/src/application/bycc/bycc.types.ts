@@ -63,6 +63,32 @@ export const OAuthLoginResult = z.object({
 });
 export type OAuthLoginResult = z.infer<typeof OAuthLoginResult>;
 
+const RateLimit = z
+  .object({
+    utilization: z.number().nullable(),
+    resets_at: z.string().nullable(),
+  })
+  .nullable();
+
+export const UsageResponse = z.object({
+  five_hour: RateLimit.optional(),
+  seven_day: RateLimit.optional(),
+  seven_day_opus: RateLimit.optional(),
+  seven_day_sonnet: RateLimit.optional(),
+  seven_day_oauth_apps: RateLimit.optional(),
+  seven_day_cowork: RateLimit.optional(),
+  extra_usage: z
+    .object({
+      is_enabled: z.boolean(),
+      monthly_limit: z.number().nullable(),
+      used_credits: z.number().nullable(),
+      utilization: z.number().nullable(),
+    })
+    .nullable()
+    .optional(),
+});
+export type UsageResponse = z.infer<typeof UsageResponse>;
+
 // ─── Health ───
 
 export const HealthResponse = z.object({

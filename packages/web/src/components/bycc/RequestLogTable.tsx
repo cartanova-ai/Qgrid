@@ -26,7 +26,7 @@ function calcCacheHitRate(row: RequestLog): string {
   return `${Math.round((row.cache_read_tokens / denom) * 100)}%`;
 }
 
-function trimQuery(q: string, maxLen = 40): string {
+function trimQuery(q: string, maxLen = 30): string {
   return q.length > maxLen ? `${q.slice(0, maxLen)}...` : q;
 }
 
@@ -86,7 +86,10 @@ export function RequestLogTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sand-200">
-                  <th className="text-left px-4 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
+                  <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
+                    Token
+                  </th>
+                  <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
                     Query
                   </th>
                   <th className="text-right px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
@@ -114,12 +117,15 @@ export function RequestLogTable() {
                     className="transition-colors duration-150 hover:bg-sand-100/60 cursor-pointer"
                     onClick={() => navigate({ to: "/requests/show", search: { id: row.id } })}
                   >
-                    <td className="px-4 py-2.5">
+                    <td className="px-3 py-2.5">
+                      <span className="text-xs text-sand-500">{row.token_name}</span>
+                    </td>
+                    <td className="px-3 py-2.5">
                       <div className="flex items-center gap-2">
                         <span className="text-[10px] text-sand-400 shrink-0">
                           {formatTime(row.created_at as unknown as string)}
                         </span>
-                        <span className="text-sand-800 truncate max-w-60" title={row.query}>
+                        <span className="text-sand-800 truncate max-w-48" title={row.query}>
                           {trimQuery(row.query)}
                         </span>
                       </div>

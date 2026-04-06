@@ -39,6 +39,9 @@ export namespace RequestLogService {
 export namespace ByccService {
   export const stats = (): SSRQuery => createSSRQuery("ByccFrame", "stats", [], ["Bycc", "stats"]);
 
+  export const usage = (tokenName?: string): SSRQuery =>
+    createSSRQuery("ByccFrame", "usage", [tokenName], ["Bycc", "usage"]);
+
   export const health = (): SSRQuery =>
     createSSRQuery("ByccFrame", "health", [], ["Bycc", "health"]);
 }
