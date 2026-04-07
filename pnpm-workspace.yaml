@@ -1,6 +1,7 @@
 packages:
   - packages/api
   - packages/web
+  - packages/sdk
 
 catalog:
   "@adonisjs/ace": ^13.3.0

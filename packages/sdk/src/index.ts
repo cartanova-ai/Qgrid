@@ -1,0 +1,76 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: SDK generic inference */
+/**
+ * @qgrid/sdk — Qgrid HTTP 클라이언트.
+ * QGRID_URL 환경변수로 서버 주소 설정 (기본: http://localhost:44900)
+ */
+import { z } from "zod";
+import type { QgridJsonResponse, QgridTextResponse } from "./types";
+
+export class QgridError extends Error {
+  constructor(
+    public code: string,
+    public status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "QgridError";
+  }
+}
+
+const jsonSchemaCache = new WeakMap<z.ZodType, string>();
+function getJsonSchemaString(schema: z.ZodType): string {
+  let cached = jsonSchemaCache.get(schema);
+  if (!cached) {
+    cached = JSON.stringify(z.toJSONSchema(schema));
+    jsonSchemaCache.set(schema, cached);
+  }
+  return cached;
+}
+
+export async function generateText<T extends z.ZodType | undefined = undefined>(params: {
+  prompt: string;
+  system?: string;
+  returnType?: T;
+  timeout?: number;
+  serverUrl?: string;
+}): Promise<T extends z.ZodType ? QgridJsonResponse<z.infer<T>> : QgridTextResponse> {
+  const { prompt, system, returnType } = params;
+  const url = params.serverUrl ?? process.env.QGRID_URL ?? "http://localhost:44900";
+  const timeout = params.timeout ?? 300_000;
+
+  const systemWithSchema = returnType
+    ? `${system ?? ""}\n\n반드시 다음 JSON Schema에 맞게 JSON으로만 응답하세요. 다른 텍스트 없이:\n${getJsonSchemaString(returnType)}`
+    : system;
+
+  const res = await fetch(`${url}/api/bycc/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, system: systemWithSchema }),
+    signal: AbortSignal.timeout(timeout),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    const message = err.error ?? err.message ?? res.statusText;
+    if (res.status === 429) throw new QgridError("QUOTA_EXHAUSTED", 429, message);
+    if (res.status === 503) throw new QgridError("SERVER_UNAVAILABLE", 503, message);
+    throw new QgridError("REQUEST_FAILED", res.status, message);
+  }
+
+  const { text, ...rest } = await res.json();
+  if (returnType) {
+    try {
+      return { ...rest, json: z.parse(returnType, JSON.parse(text)) } as any;
+    } catch (e) {
+      throw new QgridError(
+        "PARSE_FAILED",
+        200,
+        `JSON 파싱/검증 실패: ${(e as Error).message}\nRaw: ${text.slice(0, 200)}`,
+      );
+    }
+  }
+
+  return { ...rest, text } as any;
+}
+
+export type { QgridBase, QgridJsonResponse, QgridTextResponse, QgridUsage } from "./types";
