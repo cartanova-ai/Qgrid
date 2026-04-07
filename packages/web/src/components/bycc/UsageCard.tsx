@@ -56,7 +56,7 @@ function TokenUsage({ token }: { token: TokenStats }) {
   }
 
   if (!data?.five_hour) {
-    return <p className="text-[11px] text-sand-400 py-1">No usage data (manual token)</p>;
+    return <p className="text-[11px] text-sand-400 py-1">No usage data</p>;
   }
 
   return (
