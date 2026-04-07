@@ -42,7 +42,7 @@ export async function generateText<T extends z.ZodType | undefined = undefined>(
     ? `${system ?? ""}\n\n반드시 다음 JSON Schema에 맞게 JSON으로만 응답하세요. 다른 텍스트 없이:\n${getJsonSchemaString(returnType)}`
     : system;
 
-  const res = await fetch(`${url}/api/bycc/query`, {
+  const res = await fetch(`${url}/api/qgrid/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, system: systemWithSchema }),

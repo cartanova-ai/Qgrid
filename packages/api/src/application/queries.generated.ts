@@ -48,12 +48,13 @@ export namespace RequestLogService {
     );
 }
 
-export namespace ByccService {
-  export const stats = (): SSRQuery => createSSRQuery("ByccFrame", "stats", [], ["Bycc", "stats"]);
+export namespace QgridService {
+  export const stats = (): SSRQuery =>
+    createSSRQuery("QgridFrame", "stats", [], ["Qgrid", "stats"]);
 
   export const usage = (tokenName?: string): SSRQuery =>
-    createSSRQuery("ByccFrame", "usage", [tokenName], ["Bycc", "usage"]);
+    createSSRQuery("QgridFrame", "usage", [tokenName], ["Qgrid", "usage"]);
 
   export const health = (): SSRQuery =>
-    createSSRQuery("ByccFrame", "health", [], ["Bycc", "health"]);
+    createSSRQuery("QgridFrame", "health", [], ["Qgrid", "health"]);
 }

@@ -14,7 +14,7 @@ const port = Number(process.env.PORT ?? 44900);
 export default defineConfig({
   projectName: process.env.PROJECT_NAME ?? "SonamuProject",
   database: {
-    name: process.env.DB_NAME ?? "bycc",
+    name: process.env.DB_NAME ?? "qgrid",
     defaultOptions: {
       connection: {
         host: process.env.DB_HOST ?? "0.0.0.0",
@@ -189,7 +189,7 @@ export default defineConfig({
     },
     lifecycle: {
       onStart: async () => {
-        const { initPool } = await import("./application/bycc/pool.functions");
+        const { initPool } = await import("./application/qgrid/pool");
         try {
           const { TokenModel } = await import("./application/token/token.model");
           const entries = await TokenModel.findActive("A");

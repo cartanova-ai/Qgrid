@@ -1,6 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ByccService } from "@/services/services.generated";
+import { QgridService } from "@/services/services.generated";
 import EyeIcon from "~icons/lucide/eye";
 import EyeOffIcon from "~icons/lucide/eye-off";
 import KeyIcon from "~icons/lucide/key-round";
@@ -15,8 +15,8 @@ export function AddTokenModal() {
   const [oauthLoading, setOauthLoading] = useState(false);
 
   const queryClient = useQueryClient();
-  const addMutation = ByccService.useAddTokenMutation();
-  const oauthMutation = ByccService.useOauthLoginMutation();
+  const addMutation = QgridService.useAddTokenMutation();
+  const oauthMutation = QgridService.useOauthLoginMutation();
 
   const handleOAuthLogin = async () => {
     const trimmedName = name.trim();
@@ -29,7 +29,7 @@ export function AddTokenModal() {
     setOauthLoading(true);
     try {
       await oauthMutation.mutateAsync({ name: trimmedName });
-      await queryClient.invalidateQueries({ queryKey: ["Bycc"] });
+      await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
       close();
     } catch {
       setError("OAuth login failed");
@@ -52,7 +52,7 @@ export function AddTokenModal() {
         setError("이미 등록된 토큰입니다");
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ["Bycc"] });
+      await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
       close();
     } catch {
       setError("토큰 추가에 실패했습니다");

@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AddTokenModal } from "@/components/bycc/AddTokenModal";
-import { TokenTable } from "@/components/bycc/TokenTable";
-import { ByccService } from "@/services/services.generated";
+import { AddTokenModal } from "@/components/qgrid/AddTokenModal";
+import { TokenTable } from "@/components/qgrid/TokenTable";
+import { QgridService } from "@/services/services.generated";
 
 export const Route = createFileRoute("/tokens")({
   component: TokensPage,
 });
 
 function TokensPage() {
-  const { data, isLoading } = ByccService.useStats();
+  const { data, isLoading } = QgridService.useStats();
 
   return (
     <div className="space-y-5 max-w-300 mx-auto -translate-x-4">

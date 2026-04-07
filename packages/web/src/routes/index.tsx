@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { HealthCard } from "@/components/bycc/HealthCard";
-import { RequestLogTable } from "@/components/bycc/RequestLogTable";
-import { UsageCard } from "@/components/bycc/UsageCard";
-import { ByccService } from "@/services/services.generated";
+import { HealthCard } from "@/components/qgrid/HealthCard";
+import { RequestLogTable } from "@/components/qgrid/RequestLogTable";
+import { UsageCard } from "@/components/qgrid/UsageCard";
+import { QgridService } from "@/services/services.generated";
 
 export const Route = createFileRoute("/")({
   component: Dashboard,
@@ -13,7 +13,7 @@ function Dashboard() {
     data: healthData,
     isLoading: healthLoading,
     isError: healthError,
-  } = ByccService.useHealth();
+  } = QgridService.useHealth();
 
   return (
     <div className="space-y-5 max-w-300 mx-auto -translate-x-4">

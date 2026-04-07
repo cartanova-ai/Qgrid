@@ -20,7 +20,7 @@ import {
   OAuthLoginResult,
   TokenStats,
   UsageResponse,
-} from "./bycc/bycc.types";
+} from "./qgrid/qgrid.types";
 import { RequestLogListParams, RequestLogSaveParams } from "./request-log/request-log.types";
 import {
   RequestLogSubsetKey,
@@ -208,7 +208,7 @@ export namespace RequestLogService {
     });
 }
 
-export namespace ByccService {
+export namespace QgridService {
   export async function query(
     prompt: string,
     system?: string,
@@ -216,7 +216,7 @@ export namespace ByccService {
   ): Promise<CliResult> {
     return fetch({
       method: "POST",
-      url: `/api/bycc/query`,
+      url: `/api/qgrid/query`,
       data: { prompt, system, timeout },
     });
   }
@@ -230,13 +230,13 @@ export namespace ByccService {
   export async function stats(): Promise<TokenStats[]> {
     return fetch({
       method: "GET",
-      url: `/api/bycc/stats`,
+      url: `/api/qgrid/stats`,
     });
   }
 
   export const statsQueryOptions = () =>
     queryOptions({
-      queryKey: ["Bycc", "stats"],
+      queryKey: ["Qgrid", "stats"],
       queryFn: () => stats(),
     });
 
@@ -249,7 +249,7 @@ export namespace ByccService {
   export async function addToken(token: string, name?: string): Promise<{ added: boolean }> {
     return fetch({
       method: "POST",
-      url: `/api/bycc/addToken`,
+      url: `/api/qgrid/addToken`,
       data: { token, name },
     });
   }
@@ -266,7 +266,7 @@ export namespace ByccService {
   ): Promise<{ updated: boolean }> {
     return fetch({
       method: "POST",
-      url: `/api/bycc/updateToken`,
+      url: `/api/qgrid/updateToken`,
       data: { token, name, newToken },
     });
   }
@@ -280,7 +280,7 @@ export namespace ByccService {
   export async function removeToken(token: string): Promise<{ removed: boolean }> {
     return fetch({
       method: "POST",
-      url: `/api/bycc/removeToken`,
+      url: `/api/qgrid/removeToken`,
       data: { token },
     });
   }
@@ -293,7 +293,7 @@ export namespace ByccService {
   export async function oauthLogin(name: string): Promise<OAuthLoginResult> {
     return fetch({
       method: "POST",
-      url: `/api/bycc/oauthLogin`,
+      url: `/api/qgrid/oauthLogin`,
       data: { name },
     });
   }
@@ -306,13 +306,13 @@ export namespace ByccService {
   export async function usage(tokenName?: string): Promise<UsageResponse> {
     return fetch({
       method: "GET",
-      url: `/api/bycc/usage?${qs.stringify({ tokenName })}`,
+      url: `/api/qgrid/usage?${qs.stringify({ tokenName })}`,
     });
   }
 
   export const usageQueryOptions = (tokenName?: string) =>
     queryOptions({
-      queryKey: ["Bycc", "usage", tokenName],
+      queryKey: ["Qgrid", "usage", tokenName],
       queryFn: () => usage(tokenName),
     });
 
@@ -325,13 +325,13 @@ export namespace ByccService {
   export async function health(): Promise<HealthResponse> {
     return fetch({
       method: "GET",
-      url: `/api/bycc/health`,
+      url: `/api/qgrid/health`,
     });
   }
 
   export const healthQueryOptions = () =>
     queryOptions({
-      queryKey: ["Bycc", "health"],
+      queryKey: ["Qgrid", "health"],
       queryFn: () => health(),
     });
 

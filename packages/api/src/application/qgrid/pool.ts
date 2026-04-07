@@ -1,8 +1,4 @@
 /**
- * @generated
- * API에서 동기화된 파일입니다. 직접 수정하지 마세요.
- */
-/**
  * ClaudePool — 멀티 토큰 프로세스 풀.
  *
  * 2-layer 아키텍처: ClaudePool → Worker (flat)
@@ -11,9 +7,9 @@
  * - 투명한 쿼터 failover (QuotaError 시 다른 토큰으로 자동 재시도)
  * - 워커 관리만 담당 (DB 의존 없음)
  */
-import type { CliResult, PoolConfig, QueryInput, TokenStats } from "./bycc.types";
-import { QuotaError } from "./bycc.types";
-import { Worker, type WorkerConfig } from "./worker.functions";
+import type { CliResult, PoolConfig, QueryInput, TokenStats } from "./qgrid.types";
+import { QuotaError } from "./qgrid.types";
+import { Worker, type WorkerConfig } from "./worker";
 
 class ClaudePool {
   workers = new Map<string, Worker[]>();
@@ -30,7 +26,7 @@ class ClaudePool {
     this.size = config.size ?? 3;
     this.model = config.model ?? "sonnet";
     this.timeout = config.timeout ?? 300_000;
-    this.cwd = config.cwd ?? "/tmp/bycc";
+    this.cwd = config.cwd ?? "/tmp/qgrid";
     this.maxCalls = config.maxCalls ?? 500;
 
     config.tokens.forEach((token) => {

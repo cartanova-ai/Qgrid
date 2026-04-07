@@ -8,7 +8,7 @@ PASSWORD=${DB_PASSWORD:-1234}
 
 export PGPASSWORD=$PASSWORD
 
-for DB in bycc bycc_fixture bycc_test; do
+for DB in qgrid qgrid_fixture qgrid_test; do
   if psql -h $HOST -p $PORT -U $USER -lqt | cut -d \| -f 1 | grep -qw $DB; then
     echo "✓ $DB already exists"
   else

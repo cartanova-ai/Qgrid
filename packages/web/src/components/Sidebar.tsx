@@ -31,7 +31,7 @@ export default function Sidebar({ className }: SidebarProps) {
       className={`hidden md:flex w-56 bg-sand-50 flex-col shrink-0 border-r border-sand-200 ${className ?? ""}`}
     >
       <div className="px-5 py-5 border-b border-sand-200">
-        <span className="text-base font-semibold text-sand-900">ByCC</span>
+        <span className="text-base font-semibold text-sand-900">Qgrid</span>
         <p className="text-[11px] text-sand-400 mt-0.5">Token Management</p>
       </div>
 

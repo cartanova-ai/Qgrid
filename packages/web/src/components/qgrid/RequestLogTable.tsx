@@ -1,6 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ByccService, RequestLogService } from "@/services/services.generated";
+import { QgridService, RequestLogService } from "@/services/services.generated";
 import type { RequestLogSubsetMapping } from "@/services/sonamu.generated";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
@@ -32,7 +32,7 @@ export function RequestLogTable() {
   const [num, setNum] = useState(PAGE_SIZE);
   const [tokenFilter, setTokenFilter] = useState("");
 
-  const { data: statsData } = ByccService.useStats();
+  const { data: statsData } = QgridService.useStats();
   const tokenNames = (statsData ?? []).map((t) => t.name).filter(Boolean) as string[];
 
   const { data, isLoading } = RequestLogService.useRequestLogs("A", {

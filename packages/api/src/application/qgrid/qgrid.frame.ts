@@ -1,14 +1,14 @@
 /**
- * ByCC Frame — Sonamu HTTP API 엔드포인트.
+ * Qgrid Frame — Sonamu HTTP API 엔드포인트.
  *
- * POST   /api/bycc/query       — LLM 쿼리 (system?, prompt)
- * GET    /api/bycc/stats       — 토큰별 상태
- * POST   /api/bycc/addToken    — 토큰 추가 (수동)
- * POST   /api/bycc/updateToken — 토큰 수정
- * POST   /api/bycc/removeToken — 토큰 제거
- * POST   /api/bycc/oauthLogin  — OAuth 로그인 (브라우저)
- * GET    /api/bycc/usage       — 쿼터 사용률 (Anthropic API)
- * GET    /api/bycc/health      — 헬스체크
+ * POST   /api/qgrid/query       — LLM 쿼리 (system?, prompt)
+ * GET    /api/qgrid/stats       — 토큰별 상태
+ * POST   /api/qgrid/addToken    — 토큰 추가 (수동)
+ * POST   /api/qgrid/updateToken — 토큰 수정
+ * POST   /api/qgrid/removeToken — 토큰 제거
+ * POST   /api/qgrid/oauthLogin  — OAuth 로그인 (브라우저)
+ * GET    /api/qgrid/usage       — 쿼터 사용률 (Anthropic API)
+ * GET    /api/qgrid/health      — 헬스체크
  */
 import { exec } from "node:child_process";
 import http from "node:http";
@@ -16,25 +16,25 @@ import type { AddressInfo } from "node:net";
 import { api, BaseFrameClass } from "sonamu";
 import { RequestLogModel } from "../request-log/request-log.model";
 import { TokenModel } from "../token/token.model";
-import type {
-  CliResult,
-  HealthResponse,
-  OAuthLoginResult,
-  TokenStats,
-  UsageResponse,
-} from "./bycc.types";
 import {
   buildAuthUrl,
   exchangeCodeForTokens,
   fetchUsage,
   generatePKCE,
   refreshAccessToken,
-} from "./oauth.functions";
-import { getPool } from "./pool.functions";
+} from "./oauth";
+import { getPool } from "./pool";
+import type {
+  CliResult,
+  HealthResponse,
+  OAuthLoginResult,
+  TokenStats,
+  UsageResponse,
+} from "./qgrid.types";
 
-class ByccFrameClass extends BaseFrameClass {
+class QgridFrameClass extends BaseFrameClass {
   constructor() {
-    super("Bycc");
+    super("Qgrid");
   }
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })
@@ -142,7 +142,7 @@ class ByccFrameClass extends BaseFrameClass {
         }
 
         res.writeHead(200, { "Content-Type": "text/html" });
-        res.end("<h1>Login successful!</h1><p>You can close this tab and return to ByCC.</p>");
+        res.end("<h1>Login successful!</h1><p>You can close this tab and return to Qgrid.</p>");
         resolve({ port: listenPort, code: authCode });
         server.close();
       });
@@ -234,4 +234,4 @@ class ByccFrameClass extends BaseFrameClass {
   }
 }
 
-export const ByccFrame = new ByccFrameClass();
+export const QgridFrame = new QgridFrameClass();

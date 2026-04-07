@@ -9,8 +9,8 @@
  */
 import { type ChildProcess, spawn } from "node:child_process";
 import { mkdirSync } from "node:fs";
-import type { CliResult, QueryInput } from "./bycc.types";
-import { maskToken, ProcessError, QuotaError, TimeoutError } from "./bycc.types";
+import type { CliResult, QueryInput } from "./qgrid.types";
+import { maskToken, ProcessError, QuotaError, TimeoutError } from "./qgrid.types";
 
 type PendingRequest = {
   resolve: (value: CliResult) => void;

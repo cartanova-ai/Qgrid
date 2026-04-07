@@ -1,4 +1,4 @@
-# ByCC (By Claude Code)
+# QGrid (Quota Grid)
 
 Anthropic API 키(토큰 과금) 대신 **구독 정액제 크레딧**으로 LLM을 호출
 

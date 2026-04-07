@@ -108,7 +108,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/bycc/query
+POST {{baseUrl}}/api/qgrid/query
 Content-Type: application/json
 
 {
@@ -119,13 +119,13 @@ Content-Type: application/json
 
 ###
 
-GET {{baseUrl}}/api/bycc/stats
+GET {{baseUrl}}/api/qgrid/stats
 	?
 Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/bycc/addToken
+POST {{baseUrl}}/api/qgrid/addToken
 Content-Type: application/json
 
 {
@@ -135,7 +135,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/bycc/updateToken
+POST {{baseUrl}}/api/qgrid/updateToken
 Content-Type: application/json
 
 {
@@ -146,7 +146,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/bycc/removeToken
+POST {{baseUrl}}/api/qgrid/removeToken
 Content-Type: application/json
 
 {
@@ -155,7 +155,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/bycc/oauthLogin
+POST {{baseUrl}}/api/qgrid/oauthLogin
 Content-Type: application/json
 
 {
@@ -164,12 +164,12 @@ Content-Type: application/json
 
 ###
 
-GET {{baseUrl}}/api/bycc/usage
+GET {{baseUrl}}/api/qgrid/usage
 	?tokenName=TOKENNAME
 Content-Type: application/json
 
 ###
 
-GET {{baseUrl}}/api/bycc/health
+GET {{baseUrl}}/api/qgrid/health
 	?
 Content-Type: application/json

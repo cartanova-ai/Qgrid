@@ -1,8 +1,8 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import type { TokenStats } from "@/services/bycc/bycc.types";
-import { maskToken } from "@/services/bycc/bycc.types";
-import { ByccService } from "@/services/services.generated";
+import type { TokenStats } from "@/services/qgrid/qgrid.types";
+import { maskToken } from "@/services/qgrid/qgrid.types";
+import { QgridService } from "@/services/services.generated";
 import CheckIcon from "~icons/lucide/check";
 import CopyIcon from "~icons/lucide/copy";
 import EyeIcon from "~icons/lucide/eye";
@@ -25,13 +25,13 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
   const [copiedToken, setCopiedToken] = useState(false);
 
   const queryClient = useQueryClient();
-  const removeMutation = ByccService.useRemoveTokenMutation();
-  const updateMutation = ByccService.useUpdateTokenMutation();
+  const removeMutation = QgridService.useRemoveTokenMutation();
+  const updateMutation = QgridService.useUpdateTokenMutation();
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
     await removeMutation.mutateAsync({ token: deleteTarget.token });
-    await queryClient.invalidateQueries({ queryKey: ["Bycc"] });
+    await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
     setDeleteTarget(null);
   };
 
@@ -50,7 +50,7 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
       name: editName.trim(),
       newToken: editToken.trim(),
     });
-    await queryClient.invalidateQueries({ queryKey: ["Bycc"] });
+    await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
     setEditTarget(null);
   };
 

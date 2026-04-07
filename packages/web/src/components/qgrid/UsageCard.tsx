@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { TokenStats } from "@/services/bycc/bycc.types";
-import { ByccService } from "@/services/services.generated";
+import type { TokenStats } from "@/services/qgrid/qgrid.types";
+import { QgridService } from "@/services/services.generated";
 import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
@@ -45,7 +45,7 @@ function UsageRow({
 }
 
 function TokenUsage({ token }: { token: TokenStats }) {
-  const { data, isLoading } = ByccService.useUsage(token.name);
+  const { data, isLoading } = QgridService.useUsage(token.name);
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2 py-2">
@@ -95,7 +95,7 @@ function TokenUsage({ token }: { token: TokenStats }) {
 
 export function UsageCard() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { data: statsData, isLoading } = ByccService.useStats();
+  const { data: statsData, isLoading } = QgridService.useStats();
 
   if (isLoading) {
     return (
