@@ -16,10 +16,6 @@
     "checksum": "f0728149d445fed45e5b01abaa30cac4f8cea926"
   },
   {
-    "path": "src/application/bycc/tokens.functions.ts",
-    "checksum": "72b025461c18d3aa7977492ccf80cab3982368fe"
-  },
-  {
     "path": "src/application/bycc/worker.functions.ts",
     "checksum": "edb73904ef2704123592ccccb4ff1fac87b0f092"
   },
