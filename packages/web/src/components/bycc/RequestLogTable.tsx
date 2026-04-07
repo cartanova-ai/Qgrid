@@ -1,15 +1,12 @@
-import { useListParams } from "@sonamu-kit/react-components/lib";
 import { useNavigate } from "@tanstack/react-router";
-import { RequestLogListParams } from "@/services/request-log/request-log.types";
+import { useState } from "react";
 import { ByccService, RequestLogService } from "@/services/services.generated";
-import {
-  RequestLogOrderBy,
-  RequestLogSearchField,
-  type RequestLogSubsetMapping,
-} from "@/services/sonamu.generated";
+import type { RequestLogSubsetMapping } from "@/services/sonamu.generated";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
 type RequestLog = RequestLogSubsetMapping["A"];
+
+const PAGE_SIZE = 50;
 
 function formatTime(iso: string): string {
   const d = new Date(iso);
@@ -32,47 +29,47 @@ function trimQuery(q: string, maxLen = 30): string {
 
 export function RequestLogTable() {
   const navigate = useNavigate();
-
-  const { listParams, register } = useListParams(RequestLogListParams, {
-    num: 50,
-    page: 1,
-    search: RequestLogSearchField.options[0],
-    orderBy: RequestLogOrderBy.options[0],
-  });
+  const [num, setNum] = useState(PAGE_SIZE);
+  const [tokenFilter, setTokenFilter] = useState("");
 
   const { data: statsData } = ByccService.useStats();
   const tokenNames = (statsData ?? []).map((t) => t.name).filter(Boolean) as string[];
 
-  const { data, isLoading } = RequestLogService.useRequestLogs("A", listParams);
+  const { data, isLoading } = RequestLogService.useRequestLogs("A", {
+    num,
+    page: 1,
+    orderBy: "id-desc" as const,
+    ...(tokenFilter ? { token_name: tokenFilter } : {}),
+  });
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
+  const hasMore = num < total;
 
   return (
     <div>
       {/* Filter */}
       <div className="flex items-center gap-2 mb-3">
-        {tokenNames.length > 0 &&
-          (() => {
-            const { value, onValueChange } = register("token_name");
-            return (
-              <select
-                value={value ?? ""}
-                onChange={(e) => onValueChange(e.target.value)}
-                className="border border-sand-200 rounded-md px-2 py-1 text-xs text-sand-700 bg-white focus:outline-none focus:border-sienna-300"
-              >
-                <option value="">All Tokens</option>
-                {tokenNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </select>
-            );
-          })()}
+        {tokenNames.length > 0 && (
+          <select
+            value={tokenFilter}
+            onChange={(e) => {
+              setTokenFilter(e.target.value);
+              setNum(PAGE_SIZE);
+            }}
+            className="border border-sand-200 rounded-md px-2 py-1 text-xs text-sand-700 bg-white focus:outline-none focus:border-sienna-300"
+          >
+            <option value="">All Tokens</option>
+            {tokenNames.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        )}
         <span className="text-[11px] text-sand-400">{total} results</span>
       </div>
 
-      {isLoading && listParams.page === 1 ? (
+      {isLoading && num === PAGE_SIZE ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={`skel-${i}`} className="h-8 bg-sand-100 rounded animate-pulse" />
@@ -154,20 +151,15 @@ export function RequestLogTable() {
             </table>
           </div>
 
-          {/* Load more */}
-          {(listParams.page ?? 1) * (listParams.num ?? 50) < total &&
-            (() => {
-              const { onValueChange } = register("page");
-              return (
-                <button
-                  type="button"
-                  className="mt-3 w-full py-2 text-xs text-sand-500 hover:text-sienna-500 transition-colors"
-                  onClick={() => onValueChange((listParams.page ?? 1) + 1)}
-                >
-                  Load more ({total - (listParams.page ?? 1) * (listParams.num ?? 50)} remaining)
-                </button>
-              );
-            })()}
+          {hasMore && (
+            <button
+              type="button"
+              className="mt-3 w-full py-2 text-xs text-sand-500 hover:text-sienna-500 transition-colors"
+              onClick={() => setNum((prev) => prev + PAGE_SIZE)}
+            >
+              Load more ({total - num} remaining)
+            </button>
+          )}
         </>
       )}
     </div>

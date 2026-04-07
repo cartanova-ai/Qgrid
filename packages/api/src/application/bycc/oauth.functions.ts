@@ -8,8 +8,18 @@ const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 const AUTHORIZE_URL = "https://claude.com/cai/oauth/authorize";
 const TOKEN_URL = "https://platform.claude.com/v1/oauth/token";
 
+// login 시 사용 (authorize URL)
 const ALL_SCOPES = [
   "org:create_api_key",
+  "user:profile",
+  "user:inference",
+  "user:sessions:claude_code",
+  "user:mcp_servers",
+  "user:file_upload",
+];
+
+// refresh 시 사용 (org:create_api_key 제외)
+const REFRESH_SCOPES = [
   "user:profile",
   "user:inference",
   "user:sessions:claude_code",
@@ -99,7 +109,7 @@ export async function refreshAccessToken(refreshToken: string): Promise<OAuthTok
       grant_type: "refresh_token",
       refresh_token: refreshToken,
       client_id: CLIENT_ID,
-      scope: ALL_SCOPES.join(" "),
+      scope: REFRESH_SCOPES.join(" "),
     }),
   });
   if (!res.ok) {
