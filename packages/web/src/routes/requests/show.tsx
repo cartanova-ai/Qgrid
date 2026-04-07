@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { z } from "zod";
 import { RequestLogService } from "@/services/services.generated";
 import ArrowLeftIcon from "~icons/lucide/arrow-left";
@@ -90,61 +92,87 @@ function RequestDetail({ id }: { id: number }) {
           <span className="text-[10px] uppercase tracking-wider text-sand-500 font-medium">
             Response
           </span>
-          <div className="mt-1.5 rounded-lg bg-sand-50 px-4 py-3">
-            <pre className="text-sm text-sand-800 whitespace-pre-wrap break-words font-mono leading-relaxed">
-              {data.response}
-            </pre>
+          <div className="mt-1.5 rounded-lg bg-sand-50 px-4 py-3 prose prose-sm prose-sand max-w-none">
+            <Markdown remarkPlugins={[remarkGfm]}>{data.response}</Markdown>
           </div>
         </div>
       )}
 
-      {/* Token Breakdown */}
-      <div>
-        <span className="text-[10px] uppercase tracking-wider text-sand-500 font-medium">
-          Token Breakdown
-        </span>
-        <div className="mt-1.5 rounded-lg bg-sand-50 px-4 py-3">
-          <table className="text-sm tabular-nums">
-            <tbody className="text-sand-700">
-              <tr>
-                <td className="py-1 pr-8">Input</td>
-                <td className="py-1 text-right font-medium text-sand-800">
-                  {formatNum(data.input_tokens)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1 pr-8">Output</td>
-                <td className="py-1 text-right font-medium text-sand-800">
-                  {formatNum(data.output_tokens)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1 pr-8">Cache Read</td>
-                <td className="py-1 text-right font-medium text-sand-800">
-                  {formatNum(data.cache_read_tokens)}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-1 pr-8">Cache Write</td>
-                <td className="py-1 text-right font-medium text-sand-800">
-                  {formatNum(data.cache_creation_tokens)}
-                </td>
-              </tr>
-              <tr className="border-t border-sand-200/60">
-                <td className="py-1 pr-8 font-medium text-sand-800">Cache Hit Rate</td>
-                <td className="py-1 text-right font-medium text-sand-800">{cacheHitRate}</td>
-              </tr>
-            </tbody>
-          </table>
+      {/* Token Breakdown + Meta */}
+      <div className="space-y-4">
+        <div>
+          <span className="text-[10px] uppercase tracking-wider text-sand-500 font-medium">
+            Token Breakdown
+          </span>
+          <div className="mt-1.5 rounded-lg bg-sand-50 px-5 py-4">
+            <table className="w-full text-sm tabular-nums">
+              <tbody className="text-sand-700">
+                <tr>
+                  <td className="py-1.5">Input</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {formatNum(data.input_tokens)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1.5">Output</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {formatNum(data.output_tokens)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1.5">Cache Read</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {formatNum(data.cache_read_tokens)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1.5">Cache Write</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {formatNum(data.cache_creation_tokens)}
+                  </td>
+                </tr>
+                <tr className="border-t border-sand-200/60">
+                  <td className="py-1.5 font-medium text-sand-800">Cache Hit Rate</td>
+                  <td className="py-1.5 text-right font-medium text-sienna-500 text-base">
+                    {cacheHitRate}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div>
+          <span className="text-[10px] uppercase tracking-wider text-sand-500 font-medium">
+            Info
+          </span>
+          <div className="mt-1.5 rounded-lg bg-sand-50 px-5 py-4">
+            <table className="w-full text-sm">
+              <tbody className="text-sand-700">
+                <tr>
+                  <td className="py-1.5 text-sand-500">Token</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">{data.token_name}</td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 text-sand-500">Time</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {formatDateTime(data.created_at as unknown as string)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className="py-1.5 text-sand-500">Duration</td>
+                  <td className="py-1.5 text-right font-medium text-sand-800">
+                    {(data.duration_ms / 1000).toFixed(1)}s
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
-      {/* Meta */}
-      <div className="flex items-center gap-4 text-xs text-sand-500">
-        <span>Token: {data.token_name}</span>
-        <span>{formatDateTime(data.created_at as unknown as string)}</span>
-        <span>Duration: {(data.duration_ms / 1000).toFixed(1)}s</span>
-      </div>
+      {/* Spacer for footer clearance */}
+      <div className="pb-8" />
     </div>
   );
 }
