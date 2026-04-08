@@ -14,18 +14,19 @@ pnpm add @qgrid/sdk
 import { generateText } from "@qgrid/sdk";
 
 // 텍스트 응답
-const { text } = await generateText({
+const { data } = await generateText({
   prompt: "Hello",
   system: "Reply briefly.",
 });
+// data: string
 
 // 구조화 응답 (Zod 스키마 → JSON Schema 자동 포함 + 파싱/검증)
-const { json } = await generateText({
+const { data } = await generateText({
   prompt: "질문 5개 생성해줘",
   system: "질문 생성 전문가입니다.",
   returnType: z.object({ questions: z.array(z.string()) }),
 });
-json.questions // string[]
+data.questions // string[]
 ```
 
 환경변수 `QGRID_URL`로 서버 주소 설정 (기본: `http://localhost:44900`)
