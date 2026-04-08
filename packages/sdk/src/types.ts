@@ -11,5 +11,5 @@ export type QgridBase = {
   costUsd: number;
 };
 
-export type QgridTextResponse = QgridBase & { text: string };
-export type QgridJsonResponse<T> = QgridBase & { json: T };
+export type QgridResponse = QgridBase & { data: string };
+export type QgridTypedResponse<T> = QgridBase & { data: T };

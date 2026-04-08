@@ -4,7 +4,7 @@
  * QGRID_URL 환경변수로 서버 주소 설정 (기본: http://localhost:44900)
  */
 import { z } from "zod";
-import type { QgridJsonResponse, QgridTextResponse } from "./types";
+import type { QgridResponse, QgridTypedResponse } from "./types";
 
 export class QgridError extends Error {
   constructor(
@@ -33,7 +33,7 @@ export async function generateText<T extends z.ZodType | undefined = undefined>(
   returnType?: T;
   timeout?: number;
   serverUrl?: string;
-}): Promise<T extends z.ZodType ? QgridJsonResponse<z.infer<T>> : QgridTextResponse> {
+}): Promise<T extends z.ZodType ? QgridTypedResponse<z.infer<T>> : QgridResponse> {
   const { prompt, system, returnType } = params;
   const url = params.serverUrl ?? process.env.QGRID_URL ?? "http://localhost:44900";
   const timeout = params.timeout ?? 300_000;
@@ -60,7 +60,7 @@ export async function generateText<T extends z.ZodType | undefined = undefined>(
   const { text, ...rest } = await res.json();
   if (returnType) {
     try {
-      return { ...rest, json: z.parse(returnType, JSON.parse(text)) } as any;
+      return { ...rest, data: z.parse(returnType, JSON.parse(text)) } as any;
     } catch (e) {
       throw new QgridError(
         "PARSE_FAILED",
@@ -70,7 +70,7 @@ export async function generateText<T extends z.ZodType | undefined = undefined>(
     }
   }
 
-  return { ...rest, text } as any;
+  return { ...rest, data: text } as any;
 }
 
-export type { QgridBase, QgridJsonResponse, QgridTextResponse, QgridUsage } from "./types";
+export type { QgridBase, QgridResponse, QgridTypedResponse, QgridUsage } from "./types";
