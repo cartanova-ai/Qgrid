@@ -1,24 +1,26 @@
-# QGrid (Quota Grid)
+# Qgrid (Quota Grid)
 
-Anthropic API 키(토큰 과금) 대신 **구독 정액제 크레딧**으로 LLM을 호출
+Anthropic API 키(토큰 과금) 대신 **구독 정액제 크레딧**으로 LLM을 호출하는 사내 프록시 서비스.
 
 ---
 
-## SDK
+## SDK (`@qgrid/sdk`)
 
-`packages/api/src/sdk/@bycc/index.ts`를 프로젝트에 복사해서 사용합니다. (의존성: `zod`)
+```bash
+pnpm add @qgrid/sdk
+```
 
 ```typescript
-import { generateByCC } from "./bycc";
+import { generateText } from "@qgrid/sdk";
 
 // 텍스트 응답
-const { text } = await generateByCC({
+const { text } = await generateText({
   prompt: "Hello",
   system: "Reply briefly.",
 });
 
 // 구조화 응답 (Zod 스키마 → JSON Schema 자동 포함 + 파싱/검증)
-const { json } = await generateByCC({
+const { json } = await generateText({
   prompt: "질문 5개 생성해줘",
   system: "질문 생성 전문가입니다.",
   returnType: z.object({ questions: z.array(z.string()) }),
@@ -26,27 +28,26 @@ const { json } = await generateByCC({
 json.questions // string[]
 ```
 
+환경변수 `QGRID_URL`로 서버 주소 설정 (기본: `http://localhost:44900`)
+
 ---
 
 ## 시작하기
 
-### Docker (권장)
+### 로컬 개발
 
 ```bash
 git clone git@github.com:CartaNova-AI/ByCC.git
 cd ByCC
-docker compose up -d --build
-```
-
-PostgreSQL + ByCC 서버가 시작됩니다. DB 생성은 자동.
-
-### 로컬 개발
-
-```bash
 pnpm install
 cp packages/api/.env.example packages/api/.env  # DB 설정 수정
-bash packages/api/database/fixtures/init.sh      # DB 3개 생성 (bycc, bycc_fixture, bycc_test)
 pnpm -C packages/api sonamu dev
+```
+
+### Docker
+
+```bash
+docker compose up -d --build
 ```
 
 ### 토큰 등록
@@ -57,27 +58,34 @@ pnpm -C packages/api sonamu dev
 
 ---
 
-## 어떻게 동작하는가
+## 아키텍처
 
 ```
-프로젝트 (Node.js / Python / 뭐든)
-  req: POST http://bycc:44900/api/bycc/query
-  res: { text, usage, durationMs, costUsd }
-
-ByCC 서버
-  ├── ClaudePool (멀티 토큰 프로세스 풀)
-  │     ├── Worker A-0 (token=계정A) → claude CLI 프로세스
-  │     ├── Worker A-1 (token=계정A) → claude CLI 프로세스
-  │     ├── Worker B-0 (token=계정B) → claude CLI 프로세스
-  │     └── Worker B-1 (token=계정B) → claude CLI 프로세스
-  └── PostgreSQL → request_logs 테이블 (요청별 토큰 상세 기록)
+dev0 (EC2)                         각 팀원 로컬
+┌────────────┐                    ┌──────────────────────┐
+│ PostgreSQL  │ ◄──── DB 연결 ──── │ Qgrid 서버            │
+│ - tokens    │                    │  ├─ API 서버 (:44900) │
+│ - logs      │                    │  ├─ 대시보드 웹 UI     │
+│ - usage     │                    │  ├─ Worker Pool       │
+└────────────┘                    │  └─ claude -p ×N      │
+                                  └──────────────────────┘
 ```
 
 - N개 계정 토큰 등록 → 쿼터 풀링
 - least-queue-depth 라우팅 (가장 여유있는 워커에 배정)
 - 쿼터 소진 시 자동 failover (호출자는 모름)
 - 프로세스당 500콜 후 자동 재시작 (1M 컨텍스트 한계 방지)
-- 매 요청의 토큰 사용량(input/output/cache read/cache write)을 DB에 기록
+- 매 요청의 토큰 사용량을 DB에 기록
+
+## 패키지 구조
+
+```
+packages/
+├── api/     ← Sonamu 서버 (개발용)
+├── web/     ← 대시보드 React 앱
+├── sdk/     ← @qgrid/sdk (npm 패키지)
+└── cli/     ← @qgrid/cli (npm 패키지)
+```
 
 ## 대시보드
 
@@ -92,14 +100,14 @@ ByCC 서버
 
 | 엔드포인트 | 메서드 | 설명 |
 |---|---|---|
-| `/api/bycc/query` | POST | LLM 쿼리 (prompt, system?, timeout?) |
-| `/api/bycc/stats` | GET | 토큰별 상태 |
-| `/api/bycc/addToken` | POST | 토큰 추가 (수동) |
-| `/api/bycc/updateToken` | POST | 토큰 수정 |
-| `/api/bycc/removeToken` | POST | 토큰 제거 |
-| `/api/bycc/oauthLogin` | POST | OAuth 로그인 (브라우저) |
-| `/api/bycc/usage` | GET | 쿼터 사용률 (tokenName?) |
-| `/api/bycc/health` | GET | 헬스체크 |
+| `/api/qgrid/query` | POST | LLM 쿼리 (prompt, system?, timeout?) |
+| `/api/qgrid/stats` | GET | 토큰별 상태 |
+| `/api/qgrid/addToken` | POST | 토큰 추가 (수동) |
+| `/api/qgrid/updateToken` | POST | 토큰 수정 |
+| `/api/qgrid/removeToken` | POST | 토큰 제거 |
+| `/api/qgrid/oauthLogin` | POST | OAuth 로그인 (브라우저) |
+| `/api/qgrid/usage` | GET | 쿼터 사용률 (tokenName?) |
+| `/api/qgrid/health` | GET | 헬스체크 |
 | `/api/requestLog/findMany` | GET | 요청 로그 목록 |
 | `/api/requestLog/findById` | GET | 요청 로그 상세 |
 
@@ -108,6 +116,5 @@ ByCC 서버
 ## 주의사항
 
 - **쿼터 리셋**: Claude 5시간 rolling window. 소진된 토큰은 자동 failover
-- **PostgreSQL 필수**: 요청 로그 저장 + Sonamu 프레임워크 시작 시 DB 연결 필수
-- **토큰 파일**: `data/bycc-tokens.json`에 저장 (`.gitignore` 처리됨)
-- **OAuth 토큰**: 8시간 만료, 자동 refresh. Usage API 조회에는 OAuth 토큰 필요 (setup-token으로는 불가)
+- **PostgreSQL 필수**: 토큰 관리 + 요청 로그 저장
+- **OAuth 토큰**: 자동 refresh. Usage API 조회에는 OAuth 토큰 필요
