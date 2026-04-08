@@ -12,6 +12,9 @@ catalogs:
     '@tailwindcss/typography':
       specifier: ^0.5.19
       version: 0.5.19
+    '@types/node':
+      specifier: 25.0.7
+      version: 25.0.7
     react-markdown:
       specifier: ^9.1.0
       version: 9.1.0
@@ -164,6 +167,9 @@ importers:
         specifier: ^13.0.0
         version: 13.1.0
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.0.7
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(@swc/core@1.15.21)(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)
@@ -173,6 +179,9 @@ importers:
 
   packages/sdk:
     devDependencies:
+      '@types/node':
+        specifier: 'catalog:'
+        version: 25.0.7
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(@swc/core@1.15.21)(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)

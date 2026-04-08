@@ -5,7 +5,10 @@
   "bin": {
     "qgrid": "./dist/cli.js"
   },
-  "files": ["dist", "bundle"],
+  "files": [
+    "dist",
+    "bundle"
+  ],
   "scripts": {
     "bundle": "cd ../api && pnpm build && cd ../cli && mkdir -p bundle && cp -r ../api/dist ./bundle/dist && cp -r ../api/web-dist ./bundle/web-dist",
     "build": "tsup",
@@ -15,6 +18,7 @@
     "commander": "^13.0.0"
   },
   "devDependencies": {
+    "@types/node": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:"
   },
