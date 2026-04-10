@@ -67,31 +67,7 @@ export default defineConfig({
         sinks: ["console"],
         lowestLevel: process.env.NODE_ENV === "test" ? "warning" : "debug",
       },
-      {
-        category: ["sonamu", "internal", "tasks"],
-        sinks: ["console"],
-        lowestLevel: "error",
-      },
-      {
-        category: ["tasks"],
-        sinks: ["console"],
-        lowestLevel: "info",
-      },
     ],
-  },
-  tasks: {
-    enableWorker: !["true", "1"].includes(process.env.DISABLE_WORKER ?? "false"),
-    workerOptions: {
-      concurrency: 1,
-      usePubSub: true,
-      listenDelay: 500,
-    },
-    contextProvider: (defaultContext) => {
-      return {
-        ...defaultContext,
-        ip: "127.0.0.1",
-      };
-    },
   },
   server: {
     listen: { port, host },
