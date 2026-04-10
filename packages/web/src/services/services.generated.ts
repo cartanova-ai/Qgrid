@@ -17,7 +17,7 @@ import qs from "qs";
 import {
   CliResult,
   HealthResponse,
-  OAuthLoginResult,
+  OAuthStartResult,
   TokenStats,
   UsageResponse,
 } from "./qgrid/qgrid.types";
@@ -290,17 +290,17 @@ export namespace QgridService {
       mutationFn: (params: { token: string }) => removeToken(params.token),
     });
 
-  export async function oauthLogin(name: string): Promise<OAuthLoginResult> {
+  export async function oauthStart(name: string): Promise<OAuthStartResult> {
     return fetch({
       method: "POST",
-      url: `/api/qgrid/oauthLogin`,
+      url: `/api/qgrid/oauthStart`,
       data: { name },
     });
   }
 
-  export const useOauthLoginMutation = () =>
+  export const useOauthStartMutation = () =>
     useMutation({
-      mutationFn: (params: { name: string }) => oauthLogin(params.name),
+      mutationFn: (params: { name: string }) => oauthStart(params.name),
     });
 
   export async function usage(tokenName?: string): Promise<UsageResponse> {

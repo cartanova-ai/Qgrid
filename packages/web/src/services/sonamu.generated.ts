@@ -79,7 +79,7 @@ export const TokenBaseListParams = z.object({
   orderBy: TokenOrderBy,
   queryMode: SonamuQueryMode,
   id: zArrayable(z.number().int().positive()),
-  sonamuFilter: z.custom<ApplySonamuFilter<TokenBaseSchema, never, never>>(),
+  sonamuFilter: z.custom<ApplySonamuFilter<TokenBaseSchema, never, never>>(),token: z.string(),
 }).partial();;
 export type TokenBaseListParams = z.infer<typeof TokenBaseListParams>;
 
