@@ -58,6 +58,10 @@ class TokenModelClass extends BaseModelClass<
       qb.whereIn("tokens.id", asArray(params.id));
     }
 
+    if (params.token) {
+      qb.where("tokens.token", params.token);
+    }
+
     if (params.search && params.keyword && params.keyword.length > 0) {
       if (params.search === "id") {
         qb.where("tokens.id", Number(params.keyword));

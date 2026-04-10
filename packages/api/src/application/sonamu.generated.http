@@ -18,6 +18,7 @@ GET {{baseUrl}}/api/token/findMany
 	&rawParams[queryMode]=both
 	&rawParams[id]=0
 	&rawParams[sonamuFilter]=unknown-custom
+	&rawParams[token]=TOKEN
 Content-Type: application/json
 
 ###
@@ -155,7 +156,7 @@ Content-Type: application/json
 
 ###
 
-POST {{baseUrl}}/api/qgrid/oauthLogin
+POST {{baseUrl}}/api/qgrid/oauthStart
 Content-Type: application/json
 
 {
