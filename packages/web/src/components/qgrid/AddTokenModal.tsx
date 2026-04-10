@@ -16,7 +16,7 @@ export function AddTokenModal() {
 
   const queryClient = useQueryClient();
   const addMutation = QgridService.useAddTokenMutation();
-  const oauthMutation = QgridService.useOauthLoginMutation();
+  const oauthStartMutation = QgridService.useOauthStartMutation();
 
   const handleOAuthLogin = async () => {
     const trimmedName = name.trim();
@@ -28,12 +28,10 @@ export function AddTokenModal() {
     setError(null);
     setOauthLoading(true);
     try {
-      await oauthMutation.mutateAsync({ name: trimmedName });
-      await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
-      close();
+      const { authUrl } = await oauthStartMutation.mutateAsync({ name: trimmedName });
+      window.location.href = authUrl;
     } catch {
       setError("OAuth login failed");
-    } finally {
       setOauthLoading(false);
     }
   };
@@ -102,7 +100,7 @@ export function AddTokenModal() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. DongSeon"
+                  placeholder="e.g. your-token-name"
                   className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300"
                 />
               </div>
