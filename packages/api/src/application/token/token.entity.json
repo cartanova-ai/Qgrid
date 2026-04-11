@@ -6,7 +6,7 @@
     { "name": "id", "type": "integer", "desc": "ID" },
     { "name": "created_at", "type": "date", "desc": "등록일시", "dbDefault": "CURRENT_TIMESTAMP" },
     { "name": "token", "toFilter": true, "desc": "access_token", "type": "string" },
-    { "name": "name", "type": "string", "nullable": true, "desc": "토큰 이름" },
+    { "name": "name", "desc": "토큰 이름", "type": "string" },
     { "name": "refresh_token", "type": "string", "nullable": true, "desc": "refresh_token" },
     {
       "name": "expires_at",
