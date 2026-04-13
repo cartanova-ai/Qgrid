@@ -1,6 +1,9 @@
+import { Input } from "@sonamu-kit/react-components/components";
+import { useTypeForm } from "@sonamu-kit/react-components/lib";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { QgridService } from "@/services/services.generated";
+import { TokenSaveParams } from "@/services/token/token.types";
 import EyeIcon from "~icons/lucide/eye";
 import EyeOffIcon from "~icons/lucide/eye-off";
 import KeyIcon from "~icons/lucide/key-round";
@@ -8,61 +11,52 @@ import PlusIcon from "~icons/lucide/plus";
 
 export function AddTokenModal() {
   const [open, setOpen] = useState(false);
-  const [name, setName] = useState("");
-  const [token, setToken] = useState("");
   const [showToken, setShowToken] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const [oauthLoading, setOauthLoading] = useState(false);
+
+  const { form, register, reset } = useTypeForm(TokenSaveParams, {
+    name: "",
+    token: "",
+    refresh_token: "",
+  });
 
   const queryClient = useQueryClient();
   const addMutation = QgridService.useAddTokenMutation();
   const oauthStartMutation = QgridService.useOauthStartMutation();
 
   const handleOAuthLogin = async () => {
-    const trimmedName = name.trim();
-    if (!trimmedName) {
-      setError("Name is required");
-      return;
-    }
+    if (!form.name?.trim()) return;
 
-    setError(null);
     setOauthLoading(true);
     try {
-      const { authUrl } = await oauthStartMutation.mutateAsync({ name: trimmedName });
+      const { authUrl } = await oauthStartMutation.mutateAsync({ name: form.name.trim() });
       window.location.href = authUrl;
     } catch {
-      setError("OAuth login failed");
       setOauthLoading(false);
     }
   };
 
   const handleManualSubmit = async () => {
-    const trimmed = token.trim();
-    if (!trimmed) return;
+    if (!form.token?.trim() || !form.name?.trim()) return;
 
-    setError(null);
-    try {
-      const result = await addMutation.mutateAsync({
-        token: trimmed,
-        name: name.trim(),
-      });
-      if (!result.added) {
-        setError("이미 등록된 토큰입니다");
-        return;
-      }
-      await queryClient.invalidateQueries({ queryKey: ["Qgrid"] });
-      close();
-    } catch {
-      setError("토큰 추가에 실패했습니다");
-    }
+    const result = await addMutation.mutateAsync({
+      token: form.token.trim(),
+      name: form.name.trim(),
+      refreshToken: form.refresh_token?.trim() ?? "",
+    });
+    if (!result.added) return;
+
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ["Qgrid"] }),
+      queryClient.invalidateQueries({ queryKey: ["Token"] }),
+    ]);
+    close();
   };
 
   const close = () => {
     setOpen(false);
-    setName("");
-    setToken("");
+    reset();
     setShowToken(false);
-    setError(null);
     setOauthLoading(false);
   };
 
@@ -95,11 +89,8 @@ export function AddTokenModal() {
                 >
                   Name *
                 </label>
-                <input
-                  id="token-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                <Input
+                  {...register("name")}
                   placeholder="e.g. your-token-name"
                   className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300"
                 />
@@ -109,7 +100,7 @@ export function AddTokenModal() {
               <button
                 type="button"
                 className="w-full py-2.5 text-sm font-medium rounded-md bg-sand-900 text-white hover:bg-sand-800 disabled:opacity-50 transition-colors duration-150 flex items-center justify-center gap-2"
-                disabled={!name.trim() || oauthLoading}
+                disabled={!form.name?.trim() || oauthLoading}
                 onClick={handleOAuthLogin}
               >
                 {oauthLoading ? (
@@ -138,19 +129,14 @@ export function AddTokenModal() {
                   htmlFor="oauth-token"
                   className="text-[10px] uppercase tracking-wider text-sand-500 font-medium"
                 >
-                  Manual Token
+                  Access Token
                 </label>
                 <div className="relative mt-1">
-                  <input
-                    id="oauth-token"
+                  <Input
                     type={showToken ? "text" : "password"}
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    placeholder="Paste your setup-token"
+                    {...register("token")}
+                    placeholder="sk-ant-oat01-..."
                     className="w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300 pr-10"
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") handleManualSubmit();
-                    }}
                   />
                   <button
                     type="button"
@@ -162,7 +148,25 @@ export function AddTokenModal() {
                 </div>
               </div>
 
-              {error && <p className="text-[11px] text-red-500">{error}</p>}
+              {/* Refresh Token (optional) */}
+              <div>
+                <label
+                  htmlFor="refresh-token"
+                  className="text-[10px] uppercase tracking-wider text-sand-500 font-medium"
+                >
+                  Refresh Token{" "}
+                  <span className="text-sand-400 normal-case tracking-normal">(optional)</span>
+                </label>
+                <Input
+                  type="password"
+                  {...register("refresh_token")}
+                  placeholder="sk-ant-ort01-..."
+                  className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300"
+                />
+                <p className="text-[10px] text-sand-400 mt-1">
+                  Enables auto-refresh when access token expires (~8h)
+                </p>
+              </div>
             </div>
 
             <div className="px-5 py-3 border-t border-sand-100 flex items-center justify-end gap-2">
@@ -173,11 +177,11 @@ export function AddTokenModal() {
               >
                 Cancel
               </button>
-              {token.trim() && (
+              {form.token?.trim() && (
                 <button
                   type="button"
                   className="px-3 py-1 text-xs font-medium rounded-md bg-sienna-400 text-white hover:bg-sienna-500 disabled:opacity-50 transition-colors duration-150"
-                  disabled={!token.trim() || addMutation.isPending}
+                  disabled={!form.name?.trim() || !form.token?.trim() || addMutation.isPending}
                   onClick={handleManualSubmit}
                 >
                   {addMutation.isPending ? "Adding..." : "Add Token"}

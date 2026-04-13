@@ -35,7 +35,9 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
   const [deleteTarget, setDeleteTarget] = useState<Token | null>(null);
   const [editTarget, setEditTarget] = useState<Token | null>(null);
   const [showEditToken, setShowEditToken] = useState(false);
+  const [showRefreshToken, setShowRefreshToken] = useState(false);
   const [copiedToken, setCopiedToken] = useState(false);
+  const [copiedRefreshToken, setCopiedRefreshToken] = useState(false);
 
   const { form, setForm, register } = useTypeForm(TokenSaveParams, {
     name: "",
@@ -68,9 +70,16 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
 
   const openEdit = (token: Token) => {
     setEditTarget(token);
-    setForm({ name: token.name ?? "", token: token.token, active: token.active });
+    setForm({
+      name: token.name ?? "",
+      token: token.token,
+      active: token.active,
+      refresh_token: token.refresh_token ?? "",
+    });
     setShowEditToken(false);
+    setShowRefreshToken(false);
     setCopiedToken(false);
+    setCopiedRefreshToken(false);
   };
 
   const handleUpdate = async () => {
@@ -81,6 +90,7 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
         token: editTarget.token,
         name: form.name?.trim() ?? "",
         newToken: newToken ?? "",
+        refreshToken: form.refresh_token?.trim() ?? "",
       }),
     ];
     if (form.active !== editTarget.active) {
@@ -96,6 +106,13 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
     navigator.clipboard.writeText(editTarget.token);
     setCopiedToken(true);
     setTimeout(() => setCopiedToken(false), 1500);
+  };
+
+  const handleCopyRefreshToken = () => {
+    if (!editTarget?.refresh_token) return;
+    navigator.clipboard.writeText(editTarget.refresh_token);
+    setCopiedRefreshToken(true);
+    setTimeout(() => setCopiedRefreshToken(false), 1500);
   };
 
   if (isLoading) {
@@ -295,6 +312,65 @@ export function TokenTable({ data, isLoading }: TokenTableProps) {
                   placeholder={showEditToken ? "" : "●●●●●●●●●●●●●●●●"}
                   className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-400 focus:outline-none focus:border-sienna-300"
                 />
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between">
+                  <label
+                    htmlFor="edit-refresh-token"
+                    className="text-[10px] uppercase tracking-wider text-sand-500 font-medium"
+                  >
+                    Refresh Token{" "}
+                    <span className="text-sand-400 normal-case tracking-normal">(optional)</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-sand-400 hover:text-sienna-500 transition-colors duration-150"
+                      onClick={handleCopyRefreshToken}
+                    >
+                      {copiedRefreshToken ? (
+                        <>
+                          <CheckIcon className="size-3 text-sage-500" />
+                          <span className="text-sage-500">Copied</span>
+                        </>
+                      ) : (
+                        <>
+                          <CopyIcon className="size-3" />
+                          <span>Copy</span>
+                        </>
+                      )}
+                    </button>
+                    <button
+                      type="button"
+                      className="flex items-center gap-1 text-[10px] text-sand-400 hover:text-sand-600 transition-colors duration-150"
+                      onClick={() => setShowRefreshToken(!showRefreshToken)}
+                    >
+                      {showRefreshToken ? (
+                        <>
+                          <EyeOffIcon className="size-3" />
+                          <span>Hide</span>
+                        </>
+                      ) : (
+                        <>
+                          <EyeIcon className="size-3" />
+                          <span>Show</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <input
+                  id="edit-refresh-token"
+                  type={showRefreshToken ? "text" : "password"}
+                  value={form.refresh_token ?? ""}
+                  onChange={(e) => setForm({ ...form, refresh_token: e.target.value })}
+                  placeholder="sk-ant-ort01-..."
+                  className="mt-1 w-full border border-sand-200 rounded-md px-3 py-2 text-sm text-sand-900 bg-white placeholder:text-sand-300 focus:outline-none focus:border-sienna-300"
+                />
+                <p className="text-[10px] text-sand-400 mt-1">
+                  Enables auto-refresh when access token expires
+                </p>
               </div>
             </div>
             <div className="px-5 py-3 border-t border-sand-100 flex items-center justify-end gap-2">

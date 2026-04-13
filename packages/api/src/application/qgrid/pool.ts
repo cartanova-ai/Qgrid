@@ -11,7 +11,7 @@ import type { CliResult, PoolConfig, QueryInput, TokenStats } from "./qgrid.type
 import { QuotaError } from "./qgrid.types";
 import { Worker, type WorkerConfig } from "./worker";
 
-class ClaudePool {
+export class ClaudePool {
   workers = new Map<string, Worker[]>();
   quotaExhausted = new Set<string>();
   requestCounts = new Map<string, number>();

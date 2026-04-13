@@ -2,6 +2,7 @@ import type { FastifyReply } from "fastify";
 import { api, BaseFrameClass } from "sonamu";
 import { RequestLogModel } from "../request-log/request-log.model";
 import { TokenModel } from "../token/token.model";
+import type { RefreshTokenParams } from "../token/token.types";
 import {
   buildAuthUrl,
   exchangeCodeForTokens,
@@ -9,7 +10,7 @@ import {
   generatePKCE,
   refreshAccessToken,
 } from "./oauth";
-import { getPool } from "./pool";
+import { type ClaudePool, getPool } from "./pool";
 import type {
   CliResult,
   HealthResponse,
@@ -61,8 +62,14 @@ class QgridFrameClass extends BaseFrameClass {
   }
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })
-  async addToken(token: string, name: string): Promise<{ added: boolean }> {
-    await TokenModel.save([{ token, name }]);
+  async addToken(token: string, name: string, refreshToken?: string): Promise<{ added: boolean }> {
+    await TokenModel.save([
+      {
+        token,
+        name,
+        ...(refreshToken && refreshToken.length > 0 ? { refresh_token: refreshToken } : {}),
+      },
+    ]);
     getPool().createWorkers(token);
     return { added: true };
   }
@@ -72,20 +79,24 @@ class QgridFrameClass extends BaseFrameClass {
     token: string,
     name?: string,
     newToken?: string,
+    refreshToken?: string,
   ): Promise<{ updated: boolean }> {
     const pool = getPool();
     const entry = await TokenModel.findByToken("A", token);
     if (!entry) return { updated: false };
 
+    const hasNewToken = newToken !== undefined && newToken.length > 0;
+    const hasRefreshToken = refreshToken !== undefined && refreshToken.length > 0;
     await TokenModel.save([
       {
         id: entry.id,
-        token: newToken ?? entry.token,
-        ...(name !== undefined && { name }),
+        token: hasNewToken ? newToken : entry.token,
+        name: name !== undefined ? name : entry.name,
+        ...(hasRefreshToken ? { refresh_token: refreshToken } : {}),
       },
     ]);
 
-    if (newToken) {
+    if (hasNewToken) {
       pool.destroyWorkers(token);
       pool.createWorkers(newToken);
     }
@@ -195,34 +206,58 @@ class QgridFrameClass extends BaseFrameClass {
   @api({ httpMethod: "GET", clients: ["axios", "tanstack-query"] })
   async usage(tokenName?: string): Promise<UsageResponse> {
     const pool = getPool();
-    const allTokens = await TokenModel.findActive("A");
+    const { rows: allTokens } = await TokenModel.findMany("A");
     const entry = tokenName
-      ? allTokens.find((e) => e.name === tokenName && e.refresh_token)
-      : allTokens.findLast((e) => e.active && e.refresh_token);
+      ? allTokens.find((e) => e.name === tokenName)
+      : allTokens.findLast((e) => e.active);
 
-    if (!entry) return {} as UsageResponse;
+    if (!entry) return { error: "NOT_FOUND" };
 
-    // 토큰 만료 체크 + refresh
+    // 만료 확인 + refresh 시도
     let accessToken = entry.token;
-    if (entry.expires_at && Number(entry.expires_at) < Date.now() && entry.refresh_token) {
-      const refreshed = await refreshAccessToken(entry.refresh_token);
-      // DB 업데이트
-      await TokenModel.save([
-        {
-          id: entry.id,
-          token: refreshed.accessToken,
-          refresh_token: refreshed.refreshToken,
-          expires_at: BigInt(refreshed.expiresAt),
-        },
-      ]);
-      // pool 워커도 업데이트
-      pool.destroyWorkers(entry.token);
-      pool.createWorkers(refreshed.accessToken);
-      accessToken = refreshed.accessToken;
+    const isExpired = entry.expires_at && Number(entry.expires_at) < Date.now();
+
+    if (isExpired && entry.refresh_token) {
+      try {
+        accessToken = await this.refreshToken(pool, entry);
+      } catch (e) {
+        console.warn(`[usage] refresh failed for ${entry.name}: ${(e as Error).message}`);
+        return { error: "re-login required" };
+      }
     }
 
+    // usage 호출
     const result = await fetchUsage(accessToken);
-    return result ?? ({} as UsageResponse);
+
+    // 인증 에러면 refresh_token으로 재시도
+    if (result.error && entry.refresh_token) {
+      try {
+        accessToken = await this.refreshToken(pool, entry);
+        return await fetchUsage(accessToken);
+      } catch (e) {
+        console.warn(`[usage] refresh failed for ${entry.name}: ${(e as Error).message}`);
+        return { error: "re-login required" };
+      }
+    }
+
+    return result;
+  }
+
+  async refreshToken(pool: ClaudePool, token: RefreshTokenParams): Promise<string> {
+    if (!token.refresh_token) throw new Error("No refresh token");
+    const refreshed = await refreshAccessToken(token.refresh_token);
+    await TokenModel.save([
+      {
+        id: token.id,
+        token: refreshed.accessToken,
+        refresh_token: refreshed.refreshToken,
+        expires_at: BigInt(refreshed.expiresAt),
+        name: token.name ?? "",
+      },
+    ]);
+    pool.destroyWorkers(token.token);
+    pool.createWorkers(refreshed.accessToken);
+    return refreshed.accessToken;
   }
 
   @api({ httpMethod: "GET", clients: ["axios", "tanstack-query"] })
