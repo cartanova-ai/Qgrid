@@ -5,7 +5,8 @@
     "build": "pnpm -r build",
     "dev": "pnpm --parallel dev",
     "format": "oxfmt --write .",
-    "check": "oxlint && oxfmt --check ."
+    "check": "oxlint && oxfmt --check .",
+    "publish:packages": "tsx scripts/publish.ts"
   },
   "devDependencies": {
     "@types/node": "^25",
