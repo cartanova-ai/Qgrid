@@ -13,6 +13,11 @@ dotenv.config({ path: ".sonamu.env" });
 export default defineConfig(({ command, isSsrBuild }) => ({
   clearScreen: false,
   plugins: [
+    tanstackRouter({
+      autoCodeSplitting: true,
+      generatedRouteTree: "./src/routeTree.gen.ts",
+      routeFileIgnorePattern: ".*(generated|test|spec).*",
+    }),
     react(),
     Icons({
       compiler: "jsx",
@@ -20,11 +25,6 @@ export default defineConfig(({ command, isSsrBuild }) => ({
       autoInstall: true,
     }),
     tailwindcss(),
-    tanstackRouter({
-      autoCodeSplitting: true,
-      generatedRouteTree: "./src/routeTree.gen.ts",
-      routeFileIgnorePattern: ".*(generated|test|spec).*",
-    }),
   ],
   resolve: {
     alias: {
