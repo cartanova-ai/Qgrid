@@ -5,15 +5,39 @@
     "qgrid": "./dist/cli.js"
   },
   "files": [
-    "dist"
+    "dist",
+    "bundle"
   ],
   "type": "module",
   "scripts": {
+    "bundle": "cd ../api && pnpm build && cd ../cli && mkdir -p bundle/public && cp -r ../api/dist ./bundle/dist && cp -r ../api/web-dist ./bundle/web-dist && mkdir -p ./bundle/src/migrations && cp ../api/src/migrations/*.ts ./bundle/src/migrations/ && cd ../api && find src -name '*.entity.json' -exec sh -c 'dest=../cli/bundle/$(echo {}) && mkdir -p $(dirname $dest) && cp {} $dest' \\;",
     "build": "tsdown",
-    "prepublishOnly": "pnpm run build"
+    "prepublishOnly": "pnpm run bundle && pnpm run build"
   },
   "dependencies": {
-    "commander": "^13.0.0"
+    "commander": "^13.0.0",
+    "@ai-sdk/anthropic": "^3.0.0",
+    "@ai-sdk/openai": "^3.0.0",
+    "@ai-sdk/provider": "^3.0.0",
+    "@ai-sdk/provider-utils": "^4.0.0",
+    "@anthropic-ai/sdk": "^0.81.0",
+    "@oxc-project/runtime": "^0.79.0",
+    "@logtape/logtape": "2.0.0",
+    "@logtape/pretty": "2.0.0",
+    "@logtape/redaction": "2.0.0",
+    "@better-auth/passkey": "~1.6.0",
+    "@better-auth/sso": "~1.6.0",
+    "ai": "^6.0.1",
+    "bcrypt": "^6.0.0",
+    "better-auth": "^1.6.0",
+    "chalk": "^4.1.2",
+    "date-fns": "^4.1.0",
+    "dotenv": "^16",
+    "knex": "^3.1.0",
+    "pg": "^8.16.3",
+    "radashi": "^12.2.0",
+    "sonamu": "^0.9.2",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@types/node": "catalog:",
