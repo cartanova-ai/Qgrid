@@ -1,6 +1,6 @@
 import { useState } from "react";
-import type { TokenStats } from "@/services/qgrid/qgrid.types";
-import { QgridService } from "@/services/services.generated";
+import { QgridService, TokenService } from "@/services/services.generated";
+import type { TokenSubsetMapping } from "@/services/sonamu.generated";
 import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
@@ -44,13 +44,24 @@ function UsageRow({
   );
 }
 
-function TokenUsage({ token }: { token: TokenStats }) {
+function TokenUsage({ token }: { token: TokenSubsetMapping["A"] }) {
   const { data, isLoading } = QgridService.useUsage(token.name);
   if (isLoading) {
     return (
       <div className="animate-pulse space-y-2 py-2">
         <div className="h-2 w-full bg-sand-200 rounded-full" />
         <div className="h-2 w-3/4 bg-sand-200 rounded-full" />
+      </div>
+    );
+  }
+
+  if (data?.error) {
+    return (
+      <div className="py-1">
+        <p className="text-[11px] text-amber-600">Session expired</p>
+        <p className="text-[10px] text-sand-400 mt-0.5">
+          Please re-login via OAuth or update your token
+        </p>
       </div>
     );
   }
@@ -95,7 +106,7 @@ function TokenUsage({ token }: { token: TokenStats }) {
 
 export function UsageCard() {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const { data: statsData, isLoading } = QgridService.useStats();
+  const { data, isLoading } = TokenService.useTokens("A");
 
   if (isLoading) {
     return (
@@ -106,7 +117,7 @@ export function UsageCard() {
     );
   }
 
-  const tokens = statsData ?? [];
+  const tokens = data?.rows ?? [];
 
   if (tokens.length === 0) {
     return (

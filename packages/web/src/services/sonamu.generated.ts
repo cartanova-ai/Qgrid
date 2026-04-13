@@ -48,14 +48,14 @@ z.object({
 id: z.int(),
 created_at: z.date(),
 token: z.string(),
-name: z.string().nullable(),
+name: z.string(),
 refresh_token: z.string().nullable(),
 expires_at: z.bigint().nullable(),
 account_uuid: z.string().nullable(),
 active: z.boolean(),
 
 });
-export type TokenBaseSchema = z.infer<typeof TokenBaseSchema> & {readonly __hasDefault__: readonly ["created_at", "name", "refresh_token", "expires_at", "account_uuid", "active", "id"],};
+export type TokenBaseSchema = z.infer<typeof TokenBaseSchema> & {readonly __hasDefault__: readonly ["created_at", "refresh_token", "expires_at", "account_uuid", "active", "id"],};
 
 // BaseListParams: RequestLog
 export const RequestLogBaseListParams = z.object({
@@ -112,7 +112,7 @@ z.object({
 id: z.int(),
 created_at: z.date(),
 token: z.string(),
-name: z.string().nullable(),
+name: z.string(),
 refresh_token: z.string().nullable(),
 expires_at: z.bigint().nullable(),
 account_uuid: z.string().nullable(),

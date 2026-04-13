@@ -134,14 +134,14 @@ export async function refreshAccessToken(refreshToken: string): Promise<OAuthTok
 const usageCache: Record<string, { data: UsageResponse; cachedAt: number }> = {};
 const USAGE_API_CACHE_TTL = 60_000; // 1분
 
-export async function fetchUsage(accessToken: string): Promise<UsageResponse | null> {
+export async function fetchUsage(accessToken: string): Promise<UsageResponse> {
   const cacheKey = accessToken.slice(-10);
   const cached = usageCache[cacheKey];
   if (cached && Date.now() - cached.cachedAt < USAGE_API_CACHE_TTL) {
-    console.log(`${cacheKey} usage API cache hit: `, cached);
-
+    console.log(`[usage] cache hit: ${cacheKey}`);
     return cached.data;
   }
+
   const res = await fetch("https://api.anthropic.com/api/oauth/usage", {
     headers: {
       Authorization: `Bearer ${accessToken}`,
@@ -152,12 +152,29 @@ export async function fetchUsage(accessToken: string): Promise<UsageResponse | n
   });
   if (!res.ok) {
     const text = await res.text();
-    console.error("fetchUsage failed:", res.status, text);
-    return cached?.data ?? null;
+
+    // 파싱 시도해서 에러 메시지 추출
+    let errorMessage = `Error ${res.status}`;
+    try {
+      const parsed = JSON.parse(text);
+      errorMessage = parsed.error?.message ?? errorMessage;
+    } catch {
+      // 파싱 안 되면 기본 메시지
+    }
+
+    console.warn(`[usage] ${res.status}: ${errorMessage}`);
+
+    // 이전 성공 캐시 있으면 유지
+    if (cached?.data && !cached.data.error) return cached.data;
+
+    // 실패도 캐시 (반복 호출 방지)
+    const errorResult = { error: errorMessage };
+    usageCache[cacheKey] = { data: errorResult, cachedAt: Date.now() };
+    return errorResult;
   }
+
   const data = (await res.json()) as UsageResponse;
   // cache invalidate
   usageCache[cacheKey] = { data, cachedAt: Date.now() };
-
   return data;
 }

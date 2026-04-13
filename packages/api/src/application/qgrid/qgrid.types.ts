@@ -70,6 +70,7 @@ const RateLimit = z
   .nullable();
 
 export const UsageResponse = z.object({
+  error: z.string().optional(),
   five_hour: RateLimit.optional(),
   seven_day: RateLimit.optional(),
   seven_day_opus: RateLimit.optional(),

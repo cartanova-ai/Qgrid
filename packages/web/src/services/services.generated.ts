@@ -246,35 +246,45 @@ export namespace QgridService {
       ...options,
     });
 
-  export async function addToken(token: string, name?: string): Promise<{ added: boolean }> {
+  export async function addToken(
+    token: string,
+    name: string,
+    refreshToken?: string,
+  ): Promise<{ added: boolean }> {
     return fetch({
       method: "POST",
       url: `/api/qgrid/addToken`,
-      data: { token, name },
+      data: { token, name, refreshToken },
     });
   }
 
   export const useAddTokenMutation = () =>
     useMutation({
-      mutationFn: (params: { token: string; name: string }) => addToken(params.token, params.name),
+      mutationFn: (params: { token: string; name: string; refreshToken: string }) =>
+        addToken(params.token, params.name, params.refreshToken),
     });
 
   export async function updateToken(
     token: string,
     name?: string,
     newToken?: string,
+    refreshToken?: string,
   ): Promise<{ updated: boolean }> {
     return fetch({
       method: "POST",
       url: `/api/qgrid/updateToken`,
-      data: { token, name, newToken },
+      data: { token, name, newToken, refreshToken },
     });
   }
 
   export const useUpdateTokenMutation = () =>
     useMutation({
-      mutationFn: (params: { token: string; name: string; newToken: string }) =>
-        updateToken(params.token, params.name, params.newToken),
+      mutationFn: (params: {
+        token: string;
+        name: string;
+        newToken: string;
+        refreshToken: string;
+      }) => updateToken(params.token, params.name, params.newToken, params.refreshToken),
     });
 
   export async function removeToken(token: string): Promise<{ removed: boolean }> {

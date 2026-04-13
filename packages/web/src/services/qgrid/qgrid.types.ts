@@ -42,7 +42,7 @@ export type PoolConfig = z.infer<typeof PoolConfig>;
 
 export const AddTokenInput = z.object({
   token: z.string(),
-  name: z.string().optional(),
+  name: z.string(),
 });
 export type AddTokenInput = z.infer<typeof AddTokenInput>;
 
@@ -53,7 +53,7 @@ export type RemoveTokenInput = z.infer<typeof RemoveTokenInput>;
 
 export const TokenStats = z.object({
   token: z.string(),
-  name: z.string().optional(),
+  name: z.string(),
   requests: z.number(),
   active: z.boolean(),
 });
@@ -74,6 +74,7 @@ const RateLimit = z
   .nullable();
 
 export const UsageResponse = z.object({
+  error: z.string().optional(),
   five_hour: RateLimit.optional(),
   seven_day: RateLimit.optional(),
   seven_day_opus: RateLimit.optional(),

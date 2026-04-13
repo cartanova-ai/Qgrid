@@ -9,10 +9,17 @@ export type TokenListParams = z.infer<typeof TokenListParams>;
 export const TokenSaveParams = TokenBaseSchema.partial({
   id: true,
   created_at: true,
-  name: true,
   refresh_token: true,
   expires_at: true,
   account_uuid: true,
   active: true,
 });
 export type TokenSaveParams = z.infer<typeof TokenSaveParams>;
+
+export const refreshTokenParams = TokenSaveParams.pick({
+  id: true,
+  token: true,
+  refresh_token: true,
+  name: true,
+});
+export type RefreshTokenParams = z.infer<typeof refreshTokenParams>;

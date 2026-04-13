@@ -1,14 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AddTokenModal } from "@/components/qgrid/AddTokenModal";
 import { TokenTable } from "@/components/qgrid/TokenTable";
-import { QgridService } from "@/services/services.generated";
+import { TokenService } from "@/services/services.generated";
 
 export const Route = createFileRoute("/tokens")({
   component: TokensPage,
 });
 
 function TokensPage() {
-  const { data, isLoading } = QgridService.useStats();
+  const { data, isLoading } = TokenService.useTokens("A");
 
   return (
     <div className="space-y-5 max-w-300 mx-auto -translate-x-4">
@@ -17,7 +17,7 @@ function TokensPage() {
         <AddTokenModal />
       </div>
 
-      <TokenTable data={data} isLoading={isLoading} />
+      <TokenTable data={data?.rows} isLoading={isLoading} />
     </div>
   );
 }
