@@ -1,5 +1,5 @@
 {
-  "name": "@qgrid/cli",
+  "name": "@cartanova/qgrid-cli",
   "version": "0.1.0",
   "bin": {
     "qgrid": "./dist/cli.js"
