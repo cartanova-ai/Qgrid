@@ -2,8 +2,7 @@
  * @generated
  * 직접 수정하지 마세요.
  */
-/** biome-ignore-all lint: generated는 무시 */
-/** biome-ignore-all assist: generated는 무시 */
+/* oxlint-disable */
 
 import type { SSRQuery } from "sonamu/ssr";
 
@@ -18,7 +17,7 @@ function createSSRQuery(
 }
 
 import { RequestLogListParams } from "./request-log/request-log.types";
-import { RequestLogSubsetKey, TokenSubsetKey } from "./sonamu.generated";
+import { TokenSubsetKey, RequestLogSubsetKey } from "./sonamu.generated";
 import { TokenListParams } from "./token/token.types";
 
 export namespace TokenService {
