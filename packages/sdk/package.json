@@ -1,6 +1,10 @@
 {
   "name": "@cartanova/qgrid-sdk",
   "version": "0.1.2",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cartanova-ai/qgrid"
+  },
   "files": [
     "dist"
   ],

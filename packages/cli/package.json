@@ -1,6 +1,10 @@
 {
   "name": "@cartanova/qgrid-cli",
   "version": "1.0.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cartanova-ai/qgrid"
+  },
   "bin": {
     "qgrid": "./dist/cli.js"
   },
