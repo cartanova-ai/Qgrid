@@ -250,6 +250,9 @@ importers:
       sonamu:
         specifier: ^0.9.2
         version: 0.9.2(e607cef8925619cd2285e2c938bc584e)
+      typescript:
+        specifier: 5.9.3
+        version: 5.9.3
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -263,9 +266,6 @@ importers:
       tsdown:
         specifier: 'catalog:'
         version: 0.12.9(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(typescript@5.9.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/sdk:
     devDependencies:
