@@ -63,7 +63,7 @@ export class ClaudePool {
     const idle = candidates.filter((w) => w.getQueueDepth() === minDepth);
     const picked = idle[this.rrIndex % idle.length];
     this.rrIndex++;
-    return picked;
+    return picked ?? null;
   }
 
   async query(input: QueryInput, timeoutMs?: number): Promise<CliResult> {
