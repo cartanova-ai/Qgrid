@@ -235,6 +235,9 @@ importers:
       dotenv:
         specifier: ^16
         version: 16.6.1
+      fastify:
+        specifier: ^4
+        version: 4.29.1
       ioredis:
         specifier: ^5.8.2
         version: 5.10.1
