@@ -16,7 +16,7 @@
   "scripts": {
     "bundle": "cd ../api && pnpm build && cd ../cli && mkdir -p bundle/public && cp -r ../api/dist ./bundle/dist && cp -r ../api/web-dist ./bundle/web-dist && cp -r ../api/src ./bundle/src",
     "build": "tsdown",
-    "prepublishOnly": "pnpm run bundle && pnpm run build"
+    "prepublishOnly": "pnpm run bundle"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.0",
