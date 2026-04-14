@@ -50,6 +50,8 @@ export class ClaudePool {
     }));
   }
 
+  private rrIndex = 0;
+
   selectWorker(): Worker | null {
     const candidates = [...this.workers.entries()]
       .filter(([token]) => !this.quotaExhausted.has(token))
@@ -57,7 +59,11 @@ export class ClaudePool {
 
     if (candidates.length === 0) return null;
 
-    return candidates.reduce((best, w) => (w.getQueueDepth() < best.getQueueDepth() ? w : best));
+    const minDepth = Math.min(...candidates.map((w) => w.getQueueDepth()));
+    const idle = candidates.filter((w) => w.getQueueDepth() === minDepth);
+    const picked = idle[this.rrIndex % idle.length];
+    this.rrIndex++;
+    return picked;
   }
 
   async query(input: QueryInput, timeoutMs?: number): Promise<CliResult> {
