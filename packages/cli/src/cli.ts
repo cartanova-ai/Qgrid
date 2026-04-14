@@ -7,17 +7,6 @@ import { fileURLToPath } from "node:url";
 import { Command } from "commander";
 
 const program = new Command();
-program.name("qgrid").version("0.1.0").description("Qgrid — LLM subscription token proxy server");
-
-function checkCommand(cmd: string): boolean {
-  try {
-    execSync(`${cmd} --version`, { stdio: "ignore" });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 program
   .name("qgrid")
   .version("1.1.0")
@@ -62,6 +51,30 @@ program
     }
 
     process.env.INIT_CWD = bundlePath;
+
+    // DB 연결 사전 체크
+    const dbHost = process.env.QGRID_DB_HOST ?? "localhost";
+    const dbPort = process.env.QGRID_DB_PORT ?? "44901";
+    const dbName = process.env.QGRID_DB_NAME ?? "qgrid";
+    try {
+      const pg = await import("pg");
+      const client = new pg.default.Client({
+        host: dbHost,
+        port: Number(dbPort),
+        user: process.env.QGRID_DB_USER ?? "postgres",
+        password: process.env.QGRID_DB_PASSWORD ?? "postgres",
+        database: dbName,
+        connectionTimeoutMillis: 5000,
+      });
+      await client.connect();
+      await client.end();
+    } catch (e) {
+      console.error(`Error: Cannot connect to PostgreSQL at ${dbHost}:${dbPort}/${dbName}`);
+      console.error(`  ${(e as Error).message}`);
+      console.error(`\nProvide DB connection via --db flag or QGRID_DB_* env vars:`);
+      console.error(`  qgrid --db postgres://user:password@host:port/dbname`);
+      process.exit(1);
+    }
 
     try {
       await import(serverEntry);
