@@ -18,14 +18,18 @@ program
 
     // --db URL 파싱 → QGRID_DB_* 환경변수로 변환
     if (opts.db) {
-      const url = new URL(opts.db);
-      process.env.QGRID_DB_HOST = url.hostname;
-      process.env.QGRID_DB_PORT = url.port || "5432";
-      process.env.QGRID_DB_USER = url.username;
-      process.env.QGRID_DB_PASSWORD = url.password;
-      process.env.QGRID_DB_NAME = url.pathname.slice(1); // remove leading /
+      const m = opts.db.match(/^postgres(?:ql)?:\/\/([^:]+):(.+)@([^:]+):(\d+)\/(.+)$/);
+      if (!m) {
+        console.error("Invalid DB URL format. Expected: postgres://user:password@host:port/dbname");
+        process.exit(1);
+      }
+      const [, user, password, host, port, dbName] = m;
+      process.env.QGRID_DB_HOST = host;
+      process.env.QGRID_DB_PORT = port;
+      process.env.QGRID_DB_USER = user;
+      process.env.QGRID_DB_PASSWORD = password;
+      process.env.QGRID_DB_NAME = dbName;
     }
-
     if (opts.port) {
       process.env.PORT = opts.port;
     }
@@ -43,7 +47,6 @@ program
     process.env.LR = "remote";
     const bundlePath = join(__dirname, "..", "bundle");
     const serverEntry = join(bundlePath, "dist", "index.js");
-
     if (!existsSync(serverEntry)) {
       console.error(`Error: Server bundle not found at ${serverEntry}`);
       console.error("Reinstall: npm i -g @cartanova/qgrid-cli");
