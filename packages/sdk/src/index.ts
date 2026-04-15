@@ -1,12 +1,11 @@
-import { type FinishReason, type LanguageModelUsage, type ModelMessage, type Prompt } from "ai";
-/**
- * @cartanova/qgrid-sdk — Qgrid HTTP 클라이언트.
- * QGRID_URL 환경변수로 서버 주소 설정 (기본: http://localhost:44900)
- */
+import { type generateText as _aiGenerateText } from "ai";
 import { z } from "zod";
 
 import { type OutputDefinition } from "./output";
 import { type QgridResponse, type QgridTypedResponse, type QgridUsage } from "./types";
+
+type AiGenerateTextParams = Parameters<typeof _aiGenerateText>[0];
+type AiGenerateTextResult = Awaited<ReturnType<typeof _aiGenerateText>>;
 
 export class QgridError extends Error {
   constructor(
@@ -91,33 +90,46 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
 
 // --- ai-sdk 호환 API ---
 
-function convertMessages(messages: ModelMessage[]): { prompt: string; system?: string } {
-  const systemMsgs = messages
-    .filter((m): m is Extract<ModelMessage, { role: "system" }> => m.role === "system")
-    .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)));
-  const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+function extractPromptAndSystem(params: Record<string, any>): { prompt: string; system?: string } {
+  let system: string | undefined;
 
-  if (nonSystemMsgs.length === 1 && nonSystemMsgs[0].role === "user") {
-    const content = nonSystemMsgs[0].content;
-    return {
-      prompt: typeof content === "string" ? content : JSON.stringify(content),
-      ...(systemMsgs.length > 0 && { system: systemMsgs.join("\n") }),
-    };
+  if (params.system) {
+    system = typeof params.system === "string" ? params.system : JSON.stringify(params.system);
   }
 
-  const prompt = nonSystemMsgs
-    .map((m) => {
-      const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
-      return `[${m.role}]: ${content}`;
-    })
-    .join("\n\n");
-  return {
-    prompt,
-    ...(systemMsgs.length > 0 && { system: systemMsgs.join("\n") }),
-  };
+  if ("prompt" in params && params.prompt) {
+    const p = params.prompt;
+    return { prompt: typeof p === "string" ? p : JSON.stringify(p), system };
+  }
+
+  if ("messages" in params && params.messages) {
+    const messages = params.messages as Array<{ role: string; content: unknown }>;
+    const systemMsgs = messages
+      .filter((m) => m.role === "system")
+      .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)));
+    const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+    if (!system && systemMsgs.length > 0) {
+      system = systemMsgs.join("\n");
+    }
+
+    if (nonSystemMsgs.length === 1 && nonSystemMsgs[0].role === "user") {
+      const content = nonSystemMsgs[0].content;
+      return { prompt: typeof content === "string" ? content : JSON.stringify(content), system };
+    }
+
+    const prompt = nonSystemMsgs
+      .map((m) => {
+        const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+        return `[${m.role}]: ${content}`;
+      })
+      .join("\n\n");
+    return { prompt, system };
+  }
+
+  throw new QgridError("INVALID_INPUT", 400, "prompt 또는 messages 중 하나는 필수입니다.");
 }
 
-function mapUsage(usage: QgridUsage): LanguageModelUsage {
+function mapUsage(usage: QgridUsage): AiGenerateTextResult["usage"] {
   return {
     inputTokens: usage.input_tokens,
     inputTokenDetails: {
@@ -135,66 +147,42 @@ function mapUsage(usage: QgridUsage): LanguageModelUsage {
 }
 
 /**
+ * output/experimental_output 파라미터에서 zod schema를 추출.
+ * 우리 OutputDefinition이면 .schema로 직접 접근,
+ * ai-sdk Output이면 schema 추출 불가 → undefined 반환.
+ */
+function extractSchema(output: unknown): z.ZodType | undefined {
+  if (!output || typeof output !== "object") return undefined;
+  // 우리 OutputDefinition: { type: "object", schema: ZodType }
+  if ("type" in output && "schema" in output && (output as any).type === "object") {
+    return (output as OutputDefinition<unknown>).schema as z.ZodType;
+  }
+  return undefined;
+}
+
+/**
  * ai-sdk 호환 generateText.
- * import 경로만 바꾸면 기존 ai-sdk 코드와 동일하게 사용 가능.
+ * ai-sdk의 generateText와 동일한 파라미터를 받되, 내부적으로 qgrid 서버를 통해 처리.
+ * model, tools, providerOptions 등은 무시됨.
+ *
+ * 구조화 출력은 Output.object({ schema })를 @cartanova/qgrid-sdk에서 import하여 사용.
  */
 export async function generateText(
-  params: Prompt & {
-    model?: unknown;
-    providerOptions?: Record<string, unknown>;
-    output?: OutputDefinition<unknown>;
-    timeout?: number;
+  params: Omit<AiGenerateTextParams, "model" | "output" | "experimental_output"> & {
+    model?: AiGenerateTextParams["model"];
+    output?: OutputDefinition<unknown> | AiGenerateTextParams["output"];
+    experimental_output?: OutputDefinition<unknown> | AiGenerateTextParams["experimental_output"];
     serverUrl?: string;
     maxAttempts?: number;
   },
-): Promise<{
-  text: string;
-  usage: LanguageModelUsage;
-  finishReason: FinishReason;
-  output: unknown;
-}> {
-  const {
-    system: directSystem,
-    output,
-    timeout,
-    serverUrl,
-    maxAttempts,
-    model: _model,
-    providerOptions: _providerOptions,
-    ...inputParams
-  } = params;
+): Promise<Pick<AiGenerateTextResult, "text" | "usage" | "finishReason" | "output">> {
+  const { prompt, system } = extractPromptAndSystem(params);
 
-  let prompt: string;
-  let system: string | undefined;
+  const schema = extractSchema(params.output) ?? extractSchema(params.experimental_output);
+  const rest = { serverUrl: params.serverUrl, maxAttempts: params.maxAttempts };
 
-  if ("messages" in inputParams && inputParams.messages) {
-    const converted = convertMessages(inputParams.messages);
-    prompt = converted.prompt;
-    system = directSystem
-      ? typeof directSystem === "string"
-        ? directSystem
-        : JSON.stringify(directSystem)
-      : converted.system;
-  } else if ("prompt" in inputParams && inputParams.prompt) {
-    const p = inputParams.prompt;
-    prompt = typeof p === "string" ? p : JSON.stringify(p);
-    system = directSystem
-      ? typeof directSystem === "string"
-        ? directSystem
-        : JSON.stringify(directSystem)
-      : undefined;
-  } else {
-    throw new QgridError("INVALID_INPUT", 400, "prompt 또는 messages 중 하나는 필수입니다.");
-  }
-
-  const rest = { timeout, serverUrl, maxAttempts };
-  if (output) {
-    const result = await queryQgrid({
-      prompt,
-      system,
-      returnType: output.schema as z.ZodType,
-      ...rest,
-    });
+  if (schema) {
+    const result = await queryQgrid({ prompt, system, returnType: schema, ...rest });
     return {
       text: JSON.stringify(result.data),
       usage: mapUsage(result.usage),
