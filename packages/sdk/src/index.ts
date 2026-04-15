@@ -1,10 +1,12 @@
+import { type FinishReason, type LanguageModelUsage, type ModelMessage, type Prompt } from "ai";
 /**
  * @cartanova/qgrid-sdk — Qgrid HTTP 클라이언트.
  * QGRID_URL 환경변수로 서버 주소 설정 (기본: http://localhost:44900)
  */
 import { z } from "zod";
 
-import { type QgridResponse, type QgridTypedResponse } from "./types";
+import { type OutputDefinition } from "./output";
+import { type QgridResponse, type QgridTypedResponse, type QgridUsage } from "./types";
 
 export class QgridError extends Error {
   constructor(
@@ -27,7 +29,11 @@ function getJsonSchemaString(schema: z.ZodType): string {
   return cached;
 }
 
-export async function generateText<T extends z.ZodType | undefined = undefined>(params: {
+/**
+ * 기존 qgrid 전용 API.
+ * 단순한 prompt/system 기반 호출 + Zod returnType 검증.
+ */
+export async function queryQgrid<T extends z.ZodType | undefined = undefined>(params: {
   prompt: string;
   system?: string;
   returnType?: T;
@@ -83,4 +89,132 @@ export async function generateText<T extends z.ZodType | undefined = undefined>(
   );
 }
 
+// --- ai-sdk 호환 API ---
+
+function convertMessages(messages: ModelMessage[]): { prompt: string; system?: string } {
+  const systemMsgs = messages
+    .filter((m): m is Extract<ModelMessage, { role: "system" }> => m.role === "system")
+    .map((m) => (typeof m.content === "string" ? m.content : JSON.stringify(m.content)));
+  const nonSystemMsgs = messages.filter((m) => m.role !== "system");
+
+  if (nonSystemMsgs.length === 1 && nonSystemMsgs[0].role === "user") {
+    const content = nonSystemMsgs[0].content;
+    return {
+      prompt: typeof content === "string" ? content : JSON.stringify(content),
+      ...(systemMsgs.length > 0 && { system: systemMsgs.join("\n") }),
+    };
+  }
+
+  const prompt = nonSystemMsgs
+    .map((m) => {
+      const content = typeof m.content === "string" ? m.content : JSON.stringify(m.content);
+      return `[${m.role}]: ${content}`;
+    })
+    .join("\n\n");
+  return {
+    prompt,
+    ...(systemMsgs.length > 0 && { system: systemMsgs.join("\n") }),
+  };
+}
+
+function mapUsage(usage: QgridUsage): LanguageModelUsage {
+  return {
+    inputTokens: usage.input_tokens,
+    inputTokenDetails: {
+      cacheReadTokens: usage.cache_read_input_tokens,
+      cacheWriteTokens: usage.cache_creation_input_tokens,
+    },
+    outputTokens: usage.output_tokens,
+    outputTokenDetails: undefined,
+    totalTokens: usage.input_tokens + usage.output_tokens,
+  };
+}
+
+/**
+ * ai-sdk 호환 generateText.
+ * import 경로만 바꾸면 기존 ai-sdk 코드와 동일하게 사용 가능.
+ */
+export async function generateText(
+  params: Prompt & {
+    model?: unknown;
+    providerOptions?: Record<string, unknown>;
+    output?: OutputDefinition<unknown>;
+    timeout?: number;
+    serverUrl?: string;
+    maxAttempts?: number;
+  },
+): Promise<{
+  text: string;
+  usage: LanguageModelUsage;
+  finishReason: FinishReason;
+  output: unknown;
+}> {
+  const {
+    system: directSystem,
+    output,
+    timeout,
+    serverUrl,
+    maxAttempts,
+    model: _model,
+    providerOptions: _providerOptions,
+    ...inputParams
+  } = params;
+
+  let prompt: string;
+  let system: string | undefined;
+
+  if ("messages" in inputParams && inputParams.messages) {
+    const converted = convertMessages(inputParams.messages);
+    prompt = converted.prompt;
+    system = directSystem
+      ? typeof directSystem === "string"
+        ? directSystem
+        : JSON.stringify(directSystem)
+      : converted.system;
+  } else if ("prompt" in inputParams && inputParams.prompt) {
+    const p = inputParams.prompt;
+    prompt = typeof p === "string" ? p : JSON.stringify(p);
+    system = directSystem
+      ? typeof directSystem === "string"
+        ? directSystem
+        : JSON.stringify(directSystem)
+      : undefined;
+  } else {
+    throw new QgridError("INVALID_INPUT", 400, "prompt 또는 messages 중 하나는 필수입니다.");
+  }
+
+  const rest = { timeout, serverUrl, maxAttempts };
+  if (output) {
+    const result = await queryQgrid({
+      prompt,
+      system,
+      returnType: output.schema as z.ZodType,
+      ...rest,
+    });
+    return {
+      text: JSON.stringify(result.data),
+      usage: mapUsage(result.usage),
+      finishReason: "stop",
+      output: result.data,
+    };
+  }
+
+  const result = await queryQgrid({ prompt, system, ...rest });
+  return {
+    text: result.data,
+    usage: mapUsage(result.usage),
+    finishReason: "stop",
+    output: result.data,
+  };
+}
+
+export { Output } from "./output";
+export type { OutputDefinition } from "./output";
 export type { QgridBase, QgridResponse, QgridTypedResponse, QgridUsage } from "./types";
+export type {
+  FinishReason,
+  GenerateTextResult,
+  LanguageModelUsage,
+  ModelMessage,
+  Prompt,
+} from "ai";
