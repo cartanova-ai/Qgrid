@@ -22,8 +22,11 @@
   },
   "devDependencies": {
     "@types/node": "catalog:",
+    "ai": "catalog:",
+    "msw": "^2.13.3",
     "tsdown": "catalog:",
     "typescript": "catalog:",
+    "vitest": "catalog:",
     "zod": "catalog:"
   },
   "peerDependencies": {

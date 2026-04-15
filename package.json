@@ -18,7 +18,8 @@
     "oxlint": "^1.58.0",
     "tsdown": "catalog:",
     "tsx": "^4.20.6",
-    "typescript": "^6.0.0"
+    "typescript": "^6.0.0",
+    "vitest": "catalog:"
   },
   "packageManager": "pnpm@10.32.0"
 }
