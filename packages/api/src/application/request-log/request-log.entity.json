@@ -17,10 +17,9 @@
     },
     {
       "name": "created_at",
-      "type": "date",
       "desc": "등록일시",
       "dbDefault": "CURRENT_TIMESTAMP",
-      "cone": { "note": "날짜 형식으로 생성됩니다.", "fixtureGenerator": "faker.date.past()" }
+      "type": "date"
     },
     {
       "name": "token_name",
@@ -37,7 +36,14 @@
     { "name": "cache_creation_tokens", "type": "integer", "desc": "캐시 생성 토큰" },
     { "name": "duration_ms", "type": "integer", "desc": "응답 소요시간(ms)" }
   ],
-  "indexes": [],
+  "indexes": [
+    {
+      "type": "index",
+      "name": "request_logs_token_name_index",
+      "columns": [{ "name": "token_name" }],
+      "using": "btree"
+    }
+  ],
   "subsets": {
     "A": {
       "fields": [

@@ -1,5 +1,6 @@
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
+import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
 import { QgridService, RequestLogService } from "@/services/services.generated";
@@ -9,9 +10,13 @@ type RequestLog = RequestLogSubsetMapping["A"];
 
 const PAGE_SIZE = 50;
 
-function formatTime(iso: string): string {
+function formatDateTime(iso: string): string {
   const d = new Date(iso);
-  return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mi = String(d.getMinutes()).padStart(2, "0");
+  return `${mm}-${dd} ${hh}:${mi}`;
 }
 
 function formatNum(n: number): string {
@@ -30,32 +35,31 @@ function trimQuery(q: string, maxLen = 30): string {
 
 export function RequestLogTable() {
   const navigate = useNavigate();
-  const [num, setNum] = useState(PAGE_SIZE);
+  const [page, setPage] = useState(1);
   const [tokenFilter, setTokenFilter] = useState("");
 
   const { data: statsData } = QgridService.useStats();
   const tokenNames = (statsData ?? []).map((t) => t.name).filter(Boolean) as string[];
 
   const { data, isLoading } = RequestLogService.useRequestLogs("A", {
-    num,
-    page: 1,
+    num: PAGE_SIZE,
+    page,
     orderBy: "id-desc" as const,
     ...(tokenFilter ? { token_name: tokenFilter } : {}),
   });
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
-  const hasMore = num < total;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
 
   return (
     <div>
-      {/* Filter */}
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
         {tokenNames.length > 0 && (
           <select
             value={tokenFilter}
             onChange={(e) => {
               setTokenFilter(e.target.value);
-              setNum(PAGE_SIZE);
+              setPage(1);
             }}
             className="border border-sand-200 rounded-md px-2 py-1 text-xs text-sand-700 bg-white focus:outline-none focus:border-sienna-300"
           >
@@ -70,7 +74,7 @@ export function RequestLogTable() {
         <span className="text-[11px] text-sand-400">{total} results</span>
       </div>
 
-      {isLoading && num === PAGE_SIZE ? (
+      {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={`skel-${i}`} className="h-8 bg-sand-100 rounded animate-pulse" />
@@ -84,6 +88,9 @@ export function RequestLogTable() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-sand-200">
+                  <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
+                    Date
+                  </th>
                   <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
                     Token
                   </th>
@@ -116,17 +123,17 @@ export function RequestLogTable() {
                     onClick={() => navigate({ to: "/requests/show", search: { id: row.id } })}
                   >
                     <td className="px-3 py-2.5">
+                      <span className="text-[10px] text-sand-400 tabular-nums whitespace-nowrap">
+                        {formatDateTime(row.created_at as unknown as string)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2.5">
                       <span className="text-xs text-sand-500">{row.token_name}</span>
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] text-sand-400 shrink-0">
-                          {formatTime(row.created_at as unknown as string)}
-                        </span>
-                        <span className="text-sand-800 truncate max-w-48" title={row.query}>
-                          {trimQuery(row.query)}
-                        </span>
-                      </div>
+                      <span className="text-sand-800 truncate max-w-48" title={row.query}>
+                        {trimQuery(row.query)}
+                      </span>
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-sand-700">
                       {formatNum(row.input_tokens)}
@@ -152,14 +159,28 @@ export function RequestLogTable() {
             </table>
           </div>
 
-          {hasMore && (
-            <button
-              type="button"
-              className="mt-3 w-full py-2 text-xs text-sand-500 hover:text-sienna-500 transition-colors"
-              onClick={() => setNum((prev) => prev + PAGE_SIZE)}
-            >
-              Load more ({total - num} remaining)
-            </button>
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 mt-3">
+              <button
+                type="button"
+                className="p-1 rounded text-sand-400 hover:text-sand-600 disabled:opacity-30 transition-colors"
+                disabled={page === 1}
+                onClick={() => setPage((p) => p - 1)}
+              >
+                <ChevronLeftIcon className="size-4" />
+              </button>
+              <span className="text-[11px] text-sand-400 tabular-nums">
+                {page} / {totalPages}
+              </span>
+              <button
+                type="button"
+                className="p-1 rounded text-sand-400 hover:text-sand-600 disabled:opacity-30 transition-colors"
+                disabled={page === totalPages}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                <ChevronRightIcon className="size-4" />
+              </button>
+            </div>
           )}
         </>
       )}

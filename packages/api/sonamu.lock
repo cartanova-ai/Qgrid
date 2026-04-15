@@ -9,7 +9,7 @@
   },
   {
     "path": "src/application/request-log/request-log.entity.json",
-    "checksum": "cccfa25b235e9bb78e09ebe93594f8809dc812ef"
+    "checksum": "883a0f8b3c285e52c34cd60db22b8b1030f2ded4"
   },
   {
     "path": "src/application/request-log/request-log.model.ts",
