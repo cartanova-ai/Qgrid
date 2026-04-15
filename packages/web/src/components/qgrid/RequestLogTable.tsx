@@ -3,8 +3,8 @@ import { useState } from "react";
 import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
-import { QgridService, RequestLogService } from "@/services/services.generated";
-import type { RequestLogSubsetMapping } from "@/services/sonamu.generated";
+import { RequestLogService, TokenService } from "@/services/services.generated";
+import { type RequestLogSubsetMapping } from "@/services/sonamu.generated";
 
 type RequestLog = RequestLogSubsetMapping["A"];
 
@@ -38,8 +38,8 @@ export function RequestLogTable() {
   const [page, setPage] = useState(1);
   const [tokenFilter, setTokenFilter] = useState("");
 
-  const { data: statsData } = QgridService.useStats();
-  const tokenNames = (statsData ?? []).map((t) => t.name).filter(Boolean) as string[];
+  const { data: tokensData } = TokenService.useTokens("A");
+  const tokenNames = (tokensData?.rows ?? []).map((t) => t.name).filter(Boolean) as string[];
 
   const { data, isLoading } = RequestLogService.useRequestLogs("A", {
     num: PAGE_SIZE,
