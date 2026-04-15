@@ -121,11 +121,15 @@ function mapUsage(usage: QgridUsage): LanguageModelUsage {
   return {
     inputTokens: usage.input_tokens,
     inputTokenDetails: {
+      noCacheTokens: undefined,
       cacheReadTokens: usage.cache_read_input_tokens,
       cacheWriteTokens: usage.cache_creation_input_tokens,
     },
     outputTokens: usage.output_tokens,
-    outputTokenDetails: undefined,
+    outputTokenDetails: {
+      textTokens: usage.output_tokens,
+      reasoningTokens: undefined,
+    },
     totalTokens: usage.input_tokens + usage.output_tokens,
   };
 }
