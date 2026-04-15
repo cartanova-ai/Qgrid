@@ -9,9 +9,9 @@ import {
 } from "sonamu";
 
 import { SD } from "../../i18n/sd.generated";
-import type { TokenSubsetKey, TokenSubsetMapping } from "../sonamu.generated";
+import { type TokenSubsetKey, type TokenSubsetMapping } from "../sonamu.generated";
 import { tokenLoaderQueries, tokenSubsetQueries } from "../sonamu.generated.sso";
-import type { TokenListParams, TokenSaveParams } from "./token.types";
+import { type TokenListParams, type TokenSaveParams } from "./token.types";
 
 class TokenModelClass extends BaseModelClass<
   TokenSubsetKey,

@@ -15,7 +15,7 @@ import ChevronRightIcon from "~icons/lucide/chevron-right";
 import GripVerticalIcon from "~icons/lucide/grip-vertical";
 
 import { QgridService, TokenService } from "@/services/services.generated";
-import type { TokenSubsetMapping } from "@/services/sonamu.generated";
+import { type TokenSubsetMapping } from "@/services/sonamu.generated";
 
 type Token = TokenSubsetMapping["A"];
 
