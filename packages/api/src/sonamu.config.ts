@@ -22,6 +22,8 @@ export default defineConfig({
         port: Number(process.env.QGRID_DB_PORT ?? 44901),
         user: process.env.QGRID_DB_USER ?? "postgres",
         password: process.env.QGRID_DB_PASSWORD ?? "postgres",
+        keepAlive: true,
+        keepAliveInitialDelayMillis: 10000,
       },
     },
     environments: {
