@@ -92,11 +92,15 @@ export class ClaudePool {
         throw new QuotaError("All tokens exhausted");
       }
 
+      const workerName = this.tokenNames.get(worker.tokenId) ?? "Unknown";
+      const tokenWorkers = this.workers.get(worker.tokenId);
+      const workerIdx = tokenWorkers ? tokenWorkers.indexOf(worker) + 1 : 0;
+      console.log(`[qgrid] → ${workerName}-${workerIdx} (queue: ${worker.getQueueDepth()})`);
+
       try {
         const result = await worker.query(input, timeoutMs);
         this.lastUsedToken = worker.tokenId;
-        const tokenWorkers = this.workers.get(worker.tokenId);
-        this.lastUsedWorkerIndex = tokenWorkers ? tokenWorkers.indexOf(worker) + 1 : 0;
+        this.lastUsedWorkerIndex = workerIdx;
         this.requestCounts.set(worker.tokenId, (this.requestCounts.get(worker.tokenId) ?? 0) + 1);
 
         return result;
