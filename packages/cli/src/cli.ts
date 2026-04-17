@@ -102,8 +102,15 @@ program
       await client.connect();
       await client.end();
     } catch (e) {
+      const err = e as Error;
       console.error(`Error: Cannot connect to PostgreSQL at ${dbHost}:${dbPort}/${dbName}`);
-      console.error(`  ${(e as Error).message}`);
+      console.error(`error:  ${err.message}`);
+      if (err.message.includes("timeout expired")) {
+        console.error(
+          `cannot connect to the database server. Please check if the database is running and accessible.`,
+        );
+      }
+
       console.error(`\nProvide DB connection via --db flag or QGRID_DB_* env vars:`);
       console.error(`  qgrid --db postgres://user:password@host:port/dbname`);
       process.exit(1);
