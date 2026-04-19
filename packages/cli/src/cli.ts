@@ -37,9 +37,15 @@ program
         encoding: "utf-8",
       }).trim();
       if (latest !== pkg.version) {
-        console.log(`@@Updating qgrid-cli: ${pkg.version} → ${latest}@@`);
-        execSync("npm i -g @cartanova/qgrid-cli@latest", { stdio: "inherit" });
-        console.log("@@Updated. Restarting...\n@@");
+        // pnpm으로 설치됐으면 pnpm, 아니면 npm
+        const isPnpm = process.env.npm_config_user_agent?.includes("pnpm") ||
+          execSync("which qgrid", { encoding: "utf-8" }).includes("pnpm");
+        const installCmd = isPnpm
+          ? "pnpm add -g @cartanova/qgrid-cli@latest"
+          : "npm i -g @cartanova/qgrid-cli@latest";
+        console.log(`Updating qgrid-cli: ${pkg.version} → ${latest}`);
+        execSync(installCmd, { stdio: "inherit" });
+        console.log("Updated. Restarting...\n");
         const args = process.argv.slice(2).concat("--skip-update");
         execSync(`qgrid ${args.join(" ")}`, { stdio: "inherit" });
         process.exit(0);
