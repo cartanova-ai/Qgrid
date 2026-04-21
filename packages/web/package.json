@@ -12,7 +12,7 @@
     "@dnd-kit/core": "catalog:",
     "@dnd-kit/sortable": "catalog:",
     "@dnd-kit/utilities": "catalog:",
-    "@sonamu-kit/react-components": "^0.2.3",
+    "@sonamu-kit/react-components": "^0.4.0",
     "@tailwindcss/typography": "catalog:",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-router": "1.143.11",

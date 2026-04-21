@@ -21,7 +21,7 @@
   },
   {
     "path": "src/application/sonamu.generated.ts",
-    "checksum": "08d283af941153677733740722b447cb03ba1d64"
+    "checksum": "0a577dfc8788b580577530d7acee11caf5b05d80"
   },
   {
     "path": "src/application/token/token.entity.json",
@@ -45,7 +45,7 @@
   },
   {
     "path": "src/i18n/sd.generated.ts",
-    "checksum": "b0d4c8a298f57adff345aedebab56034514cc6a8"
+    "checksum": "5de8f791b7845709e71bc56f447e8d8a251a58c1"
   },
   {
     "path": "src/sonamu.config.ts",
