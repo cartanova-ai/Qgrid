@@ -103,7 +103,8 @@ Content-Type: application/json
       "output_tokens": 0,
       "cache_read_tokens": 0,
       "cache_creation_tokens": 0,
-      "duration_ms": 0
+      "duration_ms": 0,
+      "cost_usd": null
     }
   ]
 }
@@ -134,6 +135,12 @@ Content-Type: application/json
 
 GET {{baseUrl}}/api/qgrid/stats
 	?
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}/api/qgrid/totalCost
+	?tokenName=TOKENNAME
 Content-Type: application/json
 
 ###

@@ -25,6 +25,7 @@ export const requestLogSubsetQueries = {
       cache_read_tokens: "request_logs.cache_read_tokens",
       cache_creation_tokens: "request_logs.cache_creation_tokens",
       duration_ms: "request_logs.duration_ms",
+      cost_usd: "request_logs.cost_usd",
     });
   },
 };
