@@ -3,7 +3,8 @@ import { useState } from "react";
 import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
 
-import { RequestLogService, TokenService } from "@/services/services.generated";
+import { formatMicroUsd, formatUsd } from "@/lib/cost";
+import { QgridService, RequestLogService, TokenService } from "@/services/services.generated";
 import { type RequestLogSubsetMapping } from "@/services/sonamu.generated";
 
 type RequestLog = RequestLogSubsetMapping["A"];
@@ -54,6 +55,7 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
     orderBy: "id-desc" as const,
     ...(tokenFilter ? { token_name: tokenFilter } : {}),
   });
+  const { data: costData } = QgridService.useTotalCost(tokenFilter || undefined);
   const rows = data?.rows ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -79,6 +81,9 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
           </select>
         )}
         <span className="text-[11px] text-sand-400">{total} results</span>
+        <span className="text-[11px] tabular-nums font-medium text-sienna-600">
+          {formatUsd(costData?.usd ?? 0)}
+        </span>
       </div>
 
       {isLoading ? (
@@ -119,6 +124,9 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
                   <th className="text-right px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
                     Hit
                   </th>
+                  <th className="text-right px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
+                    Cost
+                  </th>
                   <th className="w-8 px-2 py-2.5" />
                 </tr>
               </thead>
@@ -156,6 +164,9 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-sand-700">
                       {calcCacheHitRate(row)}
+                    </td>
+                    <td className="px-3 py-2.5 text-right tabular-nums text-sand-700">
+                      {row.cost_usd != null ? formatMicroUsd(row.cost_usd) : "-"}
                     </td>
                     <td className="px-2 py-2.5">
                       <ChevronRightIcon className="size-4 text-sand-400" />

@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import GripVerticalIcon from "~icons/lucide/grip-vertical";
 
+import { formatUsd } from "@/lib/cost";
 import { QgridService, TokenService } from "@/services/services.generated";
 import { type TokenSubsetMapping } from "@/services/sonamu.generated";
 
@@ -125,6 +126,9 @@ function SortableTokenCard({ token }: { token: Token }) {
       easing: "ease",
     },
   });
+  const { data: costData } = QgridService.useTotalCost(token.name, {
+    enabled: !!token.name,
+  });
 
   const style = {
     transform: CSS.Translate.toString(transform),
@@ -139,7 +143,7 @@ function SortableTokenCard({ token }: { token: Token }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="rounded-lg bg-sand-50 px-4 py-3 select-none cursor-grab active:cursor-grabbing touch-none"
+      className="relative rounded-lg bg-sand-50 px-4 py-3 select-none cursor-grab active:cursor-grabbing touch-none"
     >
       <div className="flex items-center gap-2 mb-2">
         <GripVerticalIcon className="size-3.5 text-sand-300 shrink-0" />
@@ -153,6 +157,9 @@ function SortableTokenCard({ token }: { token: Token }) {
         </span>
       </div>
       <TokenUsage token={token} />
+      <span className="absolute top-2 right-3 px-2 py-0.5 rounded-md bg-white text-[11px] tabular-nums font-medium text-sienna-600 border border-sand-200">
+        {formatUsd(costData?.usd ?? 0)}
+      </span>
     </div>
   );
 }

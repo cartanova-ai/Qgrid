@@ -219,6 +219,7 @@ const entityLabels = {
   "entity.RequestLog.cache_read_tokens": "캐시 읽기 토큰",
   "entity.RequestLog.cache_creation_tokens": "캐시 생성 토큰",
   "entity.RequestLog.duration_ms": "응답 소요시간(ms)",
+  "entity.RequestLog.cost_usd": "API 비용",
   "enum.RequestLogOrderBy.id-desc": "ID최신순",
   "enum.RequestLogSearchField.id": "ID",
   "enum.RequestLogSearchField.token_name": "토큰이름",

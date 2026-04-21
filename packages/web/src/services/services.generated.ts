@@ -259,6 +259,25 @@ export namespace QgridService {
       ...options,
     });
 
+  export async function totalCost(tokenName?: string): Promise<{ usd: number }> {
+    return fetch({
+      method: "GET",
+      url: `/api/qgrid/totalCost?${qs.stringify({ tokenName })}`,
+    });
+  }
+
+  export const totalCostQueryOptions = (tokenName?: string) =>
+    queryOptions({
+      queryKey: ["Qgrid", "totalCost", tokenName],
+      queryFn: () => totalCost(tokenName),
+    });
+
+  export const useTotalCost = (tokenName?: string, options?: { enabled?: boolean }) =>
+    useQuery({
+      ...totalCostQueryOptions(tokenName),
+      ...options,
+    });
+
   export async function addToken(
     token: string,
     name: string,

@@ -37,9 +37,10 @@ export const RequestLogBaseSchema = z.object({
   cache_read_tokens: z.int(),
   cache_creation_tokens: z.int(),
   duration_ms: z.int(),
+  cost_usd: z.int().nullable(),
 });
 export type RequestLogBaseSchema = z.infer<typeof RequestLogBaseSchema> & {
-  readonly __hasDefault__: readonly ["created_at", "id"];
+  readonly __hasDefault__: readonly ["created_at", "cost_usd", "id"];
 };
 
 // BaseSchema: Token
@@ -110,6 +111,7 @@ export const RequestLogSubsetA = z.object({
   cache_read_tokens: z.int(),
   cache_creation_tokens: z.int(),
   duration_ms: z.int(),
+  cost_usd: z.int().nullable(),
 });
 export type RequestLogSubsetA = z.infer<typeof RequestLogSubsetA>;
 export type RequestLogSubsetMapping = {
