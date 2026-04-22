@@ -38,7 +38,8 @@ program
       }).trim();
       if (latest !== pkg.version) {
         // pnpm으로 설치됐으면 pnpm, 아니면 npm
-        const isPnpm = process.env.npm_config_user_agent?.includes("pnpm") ||
+        const isPnpm =
+          process.env.npm_config_user_agent?.includes("pnpm") ||
           execSync("which qgrid", { encoding: "utf-8" }).includes("pnpm");
         const installCmd = isPnpm
           ? "pnpm add -g @cartanova/qgrid-cli@latest"

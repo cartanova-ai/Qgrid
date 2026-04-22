@@ -2,16 +2,19 @@
  * @generated
  * 직접 수정하지 마세요.
  */
+
 /* oxlint-disable */
 
-import type { AsyncIdConfig } from "@sonamu-kit/react-components/components";
+import { type AsyncIdConfig } from "@sonamu-kit/react-components/components";
 import {
   queryOptions,
   useQuery,
+  useInfiniteQuery,
+  infiniteQueryOptions,
   useMutation,
   type UseMutationOptions,
 } from "@tanstack/react-query";
-import type { AxiosProgressEvent } from "axios";
+import { type AxiosProgressEvent } from "axios";
 import qs from "qs";
 
 import {
@@ -36,6 +39,8 @@ import {
   type SSEStreamOptions,
   useSSEStream,
   toFormData,
+  dedupeAndFlatten,
+  useRefreshable,
 } from "./sonamu.shared";
 import { TokenListParams, TokenSaveParams } from "./token/token.types";
 
@@ -61,10 +66,12 @@ export namespace TokenService {
     id: number,
     options?: { enabled?: boolean },
   ) =>
-    useQuery({
-      ...getTokenQueryOptions(subset, id),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...getTokenQueryOptions(subset, id),
+        ...options,
+      }),
+    );
 
   export async function getTokens<T extends TokenSubsetKey, LP extends TokenListParams>(
     subset: T,
@@ -90,10 +97,46 @@ export namespace TokenService {
     rawParams?: LP,
     options?: { enabled?: boolean },
   ) =>
-    useQuery({
-      ...getTokensQueryOptions(subset, rawParams),
-      ...options,
+    useRefreshable(
+      useQuery({
+        ...getTokensQueryOptions(subset, rawParams),
+        ...options,
+      }),
+    );
+
+  export const getTokensInfiniteQueryOptions = <
+    T extends TokenSubsetKey,
+    LP extends TokenListParams,
+  >(
+    subset: T,
+    rawParams?: LP,
+  ) =>
+    infiniteQueryOptions({
+      queryKey: ["Token", "getTokens", "infinite", subset, rawParams],
+      queryFn: ({ pageParam }) => getTokens(subset, { ...rawParams, page: pageParam }),
+      initialPageParam: 1 as number,
+      getNextPageParam: (lastPage, allPages) => {
+        const total = (lastPage as { total?: number })?.total ?? 0;
+        const loaded = allPages.reduce(
+          (sum, p) => sum + ((p as { rows?: unknown[] })?.rows?.length ?? 0),
+          0,
+        );
+        return loaded < total ? allPages.length + 1 : undefined;
+      },
+      select: dedupeAndFlatten,
     });
+
+  export const useTokensInfinite = <T extends TokenSubsetKey, LP extends TokenListParams>(
+    subset: T,
+    rawParams?: LP,
+    options?: { enabled?: boolean },
+  ) =>
+    useRefreshable(
+      useInfiniteQuery({
+        ...getTokensInfiniteQueryOptions(subset, rawParams),
+        ...options,
+      }),
+    );
 
   export async function save(spa: TokenSaveParams[]): Promise<number[]> {
     return fetch({
@@ -157,10 +200,12 @@ export namespace RequestLogService {
     id: number,
     options?: { enabled?: boolean },
   ) =>
-    useQuery({
-      ...getRequestLogQueryOptions(subset, id),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...getRequestLogQueryOptions(subset, id),
+        ...options,
+      }),
+    );
 
   export async function getRequestLogs<
     T extends RequestLogSubsetKey,
@@ -189,10 +234,49 @@ export namespace RequestLogService {
     rawParams?: LP,
     options?: { enabled?: boolean },
   ) =>
-    useQuery({
-      ...getRequestLogsQueryOptions(subset, rawParams),
-      ...options,
+    useRefreshable(
+      useQuery({
+        ...getRequestLogsQueryOptions(subset, rawParams),
+        ...options,
+      }),
+    );
+
+  export const getRequestLogsInfiniteQueryOptions = <
+    T extends RequestLogSubsetKey,
+    LP extends RequestLogListParams,
+  >(
+    subset: T,
+    rawParams?: LP,
+  ) =>
+    infiniteQueryOptions({
+      queryKey: ["RequestLog", "getRequestLogs", "infinite", subset, rawParams],
+      queryFn: ({ pageParam }) => getRequestLogs(subset, { ...rawParams, page: pageParam }),
+      initialPageParam: 1 as number,
+      getNextPageParam: (lastPage, allPages) => {
+        const total = (lastPage as { total?: number })?.total ?? 0;
+        const loaded = allPages.reduce(
+          (sum, p) => sum + ((p as { rows?: unknown[] })?.rows?.length ?? 0),
+          0,
+        );
+        return loaded < total ? allPages.length + 1 : undefined;
+      },
+      select: dedupeAndFlatten,
     });
+
+  export const useRequestLogsInfinite = <
+    T extends RequestLogSubsetKey,
+    LP extends RequestLogListParams,
+  >(
+    subset: T,
+    rawParams?: LP,
+    options?: { enabled?: boolean },
+  ) =>
+    useRefreshable(
+      useInfiniteQuery({
+        ...getRequestLogsInfiniteQueryOptions(subset, rawParams),
+        ...options,
+      }),
+    );
 
   export async function save(spa: RequestLogSaveParams[]): Promise<number[]> {
     return fetch({
@@ -254,10 +338,12 @@ export namespace QgridService {
     });
 
   export const useStats = (options?: { enabled?: boolean }) =>
-    useQuery({
-      ...statsQueryOptions(),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...statsQueryOptions(),
+        ...options,
+      }),
+    );
 
   export async function totalCost(tokenName?: string): Promise<{ usd: number }> {
     return fetch({
@@ -273,10 +359,12 @@ export namespace QgridService {
     });
 
   export const useTotalCost = (tokenName?: string, options?: { enabled?: boolean }) =>
-    useQuery({
-      ...totalCostQueryOptions(tokenName),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...totalCostQueryOptions(tokenName),
+        ...options,
+      }),
+    );
 
   export async function addToken(
     token: string,
@@ -372,10 +460,12 @@ export namespace QgridService {
     });
 
   export const useUsage = (tokenName?: string, options?: { enabled?: boolean }) =>
-    useQuery({
-      ...usageQueryOptions(tokenName),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...usageQueryOptions(tokenName),
+        ...options,
+      }),
+    );
 
   export async function health(): Promise<HealthResponse> {
     return fetch({
@@ -391,10 +481,12 @@ export namespace QgridService {
     });
 
   export const useHealth = (options?: { enabled?: boolean }) =>
-    useQuery({
-      ...healthQueryOptions(),
-      ...options,
-    });
+    useRefreshable(
+      useQuery({
+        ...healthQueryOptions(),
+        ...options,
+      }),
+    );
 }
 
 // AsyncIdConfig: RequestLog
@@ -405,6 +497,7 @@ export const RequestLogAsyncIdConfig: AsyncIdConfig<
 > = {
   placeholderKey: "entity.RequestLog",
   useList: RequestLogService.useRequestLogs,
+  useListInfinite: RequestLogService.useRequestLogsInfinite,
 };
 
 // AsyncIdConfig: Token
@@ -415,4 +508,5 @@ export const TokenAsyncIdConfig: AsyncIdConfig<
 > = {
   placeholderKey: "entity.Token",
   useList: TokenService.useTokens,
+  useListInfinite: TokenService.useTokensInfinite,
 };
