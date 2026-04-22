@@ -3,7 +3,7 @@
  *
  * 기존 SocratsAI ClaudeCliService에서 추출 + 리팩터:
  * - 토큰/모델을 생성자에서 주입
- * - env allowlist (PATH, HOME, TMPDIR, CLAUDE_CODE_OAUTH_TOKEN만)
+ * - env allowlist (PATH, TMPDIR, CLAUDE_CODE_OAUTH_TOKEN + CLAUDE_CODE_DISABLE_* )
  * - callCount 추적 + maxCalls 도달 시 프로세스 재활용
  * - QuotaError/TimeoutError/ProcessError 구분
  */
@@ -89,6 +89,10 @@ export class Worker {
         "--verbose",
         "--max-turns",
         "1",
+        "--permission-mode",
+        "bypassPermissions",
+        "--setting-sources",
+        "project",
         "--model",
         this.config.model,
       ],
