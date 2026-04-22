@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import ChevronLeftIcon from "~icons/lucide/chevron-left";
 import ChevronRightIcon from "~icons/lucide/chevron-right";
@@ -101,6 +101,9 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
               <thead>
                 <tr className="border-b border-sand-200">
                   <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
+                    ID
+                  </th>
+                  <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
                     Date
                   </th>
                   <th className="text-left px-3 py-2.5 text-[10px] uppercase tracking-wider text-sand-400 font-medium">
@@ -135,8 +138,24 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
                   <tr
                     key={row.id}
                     className="transition-colors duration-150 hover:bg-sand-100/60 cursor-pointer"
-                    onClick={() => navigate({ to: "/requests/show", search: { id: row.id } })}
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey) {
+                        window.open(`/requests/show?id=${row.id}`, "_blank");
+                        return;
+                      }
+                      navigate({ to: "/requests/show", search: { id: row.id } });
+                    }}
                   >
+                    <td className="px-3 py-2.5">
+                      <Link
+                        to="/requests/show"
+                        search={{ id: row.id }}
+                        onClick={(e) => e.stopPropagation()}
+                        className="text-xs text-sand-500 tabular-nums hover:text-sienna-500"
+                      >
+                        {row.id}
+                      </Link>
+                    </td>
                     <td className="px-3 py-2.5">
                       <span className="text-[10px] text-sand-400 tabular-nums whitespace-nowrap">
                         {formatDateTime(row.created_at as unknown as string)}
@@ -166,7 +185,7 @@ export function RequestLogTable({ page: externalPage, onPageChange }: RequestLog
                       {calcCacheHitRate(row)}
                     </td>
                     <td className="px-3 py-2.5 text-right tabular-nums text-sand-700">
-                      {row.cost_usd != null ? formatMicroUsd(row.cost_usd) : "-"}
+                      {row.cost_usd !== null ? formatMicroUsd(row.cost_usd) : "-"}
                     </td>
                     <td className="px-2 py-2.5">
                       <ChevronRightIcon className="size-4 text-sand-400" />
