@@ -25,7 +25,7 @@ export class ClaudePool {
   constructor(config: PoolConfig) {
     this.size = config.size ?? 3;
     this.model = config.model ?? "sonnet";
-    this.timeout = config.timeout ?? 300_000;
+    this.timeout = config.timeout ?? 600_000;
     this.cwd = config.cwd ?? "/tmp/qgrid";
     this.maxCalls = config.maxCalls ?? 500;
 
