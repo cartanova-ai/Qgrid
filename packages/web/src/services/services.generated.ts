@@ -373,6 +373,27 @@ export namespace QgridService {
       }),
     );
 
+  export async function projectNames(): Promise<{ names: string[] }> {
+    return fetch({
+      method: "GET",
+      url: `/api/qgrid/projectNames`,
+    });
+  }
+
+  export const projectNamesQueryOptions = () =>
+    queryOptions({
+      queryKey: ["Qgrid", "projectNames"],
+      queryFn: () => projectNames(),
+    });
+
+  export const useProjectNames = (options?: { enabled?: boolean }) =>
+    useRefreshable(
+      useQuery({
+        ...projectNamesQueryOptions(),
+        ...options,
+      }),
+    );
+
   export async function addToken(
     token: string,
     name: string,

@@ -242,20 +242,26 @@ function RequestDetail({ id }: { id: number }) {
 
       <h1 className="text-xl font-medium text-sand-900 tracking-tight">Request Detail</h1>
 
-      <Section title="Query">
-        <div className="rounded-lg bg-sand-50 px-4 py-3">
-          <FormattedContent text={data.query} />
+      <Section title="System">
+        <div className="relative rounded-lg bg-sand-50 px-4 py-3">
+          <CopyButton text={data.system_prompt ?? "null"} />
+          <FormattedContent text={data.system_prompt ?? "null"} />
         </div>
       </Section>
 
-      {data.response && (
-        <Section title="Response">
-          <div className="relative rounded-lg bg-sand-50 px-4 py-3">
-            <CopyButton text={data.response} />
-            <FormattedContent text={data.response} markdown />
-          </div>
-        </Section>
-      )}
+      <Section title="User">
+        <div className="relative rounded-lg bg-sand-50 px-4 py-3">
+          <CopyButton text={data.user_prompt ?? "null"} />
+          <FormattedContent text={data.user_prompt ?? "null"} />
+        </div>
+      </Section>
+
+      <Section title="Response">
+        <div className="relative rounded-lg bg-sand-50 px-4 py-3">
+          <CopyButton text={data.response} />
+          <FormattedContent text={data.response} markdown />
+        </div>
+      </Section>
 
       <Section title="Token Breakdown">
         <div className="rounded-lg bg-sand-50 px-5 py-4">
@@ -301,8 +307,20 @@ function RequestDetail({ id }: { id: number }) {
           <table className="w-full text-sm">
             <tbody className="text-sand-700">
               <tr>
+                <td className="py-1.5 text-sand-500">Project</td>
+                <td className="py-1.5 text-right font-medium text-sand-800">
+                  {data.project_name ?? "—"}
+                </td>
+              </tr>
+              <tr>
                 <td className="py-1.5 text-sand-500">Token</td>
                 <td className="py-1.5 text-right font-medium text-sand-800">{data.token_name}</td>
+              </tr>
+              <tr>
+                <td className="py-1.5 text-sand-500">Model</td>
+                <td className="py-1.5 text-right font-medium text-sand-800">
+                  {data.model_name ?? "—"}
+                </td>
               </tr>
               <tr>
                 <td className="py-1.5 text-sand-500">Time</td>
