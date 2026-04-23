@@ -128,7 +128,8 @@ Content-Type: application/json
 {
   "prompt": "PROMPT",
   "system": "SYSTEM",
-  "timeout": 0
+  "timeout": 0,
+  "model": "MODEL"
 }
 
 ###

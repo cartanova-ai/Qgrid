@@ -310,18 +310,19 @@ export namespace QgridService {
     prompt: string,
     system?: string,
     timeout?: number,
+    model?: string,
   ): Promise<CliResult> {
     return fetch({
       method: "POST",
       url: `/api/qgrid/query`,
-      data: { prompt, system, timeout },
+      data: { prompt, system, timeout, model },
     });
   }
 
   export const useQueryMutation = () =>
     useMutation({
-      mutationFn: (params: { prompt: string; system: string; timeout: number }) =>
-        query(params.prompt, params.system, params.timeout),
+      mutationFn: (params: { prompt: string; system: string; timeout: number; model: string }) =>
+        query(params.prompt, params.system, params.timeout, params.model),
     });
 
   export async function stats(): Promise<TokenStats[]> {
