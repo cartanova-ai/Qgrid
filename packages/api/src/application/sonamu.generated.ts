@@ -13,10 +13,14 @@ export const RequestLogOrderBy = z.enum(["id-desc"]).describe("RequestLogOrderBy
 export type RequestLogOrderBy = z.infer<typeof RequestLogOrderBy>;
 export const RequestLogOrderByLabel = { "id-desc": "ID최신순" };
 export const RequestLogSearchField = z
-  .enum(["id", "token_name", "query"])
+  .enum(["id", "token_name", "user_prompt"])
   .describe("RequestLogSearchField");
 export type RequestLogSearchField = z.infer<typeof RequestLogSearchField>;
-export const RequestLogSearchFieldLabel = { id: "ID", token_name: "토큰이름", query: "쿼리" };
+export const RequestLogSearchFieldLabel = {
+  id: "ID",
+  token_name: "토큰이름",
+  user_prompt: "사용자 프롬프트",
+};
 
 // Enums: Token
 export const TokenOrderBy = z.enum(["id-desc", "ord-asc"]).describe("TokenOrderBy");
@@ -32,7 +36,8 @@ export const RequestLogBaseSchema = z.object({
   created_at: z.date(),
   token_name: z.string().max(100),
   project_name: z.string().max(50).nullable(),
-  query: z.string(),
+  user_prompt: z.string().nullable(),
+  system_prompt: z.string().nullable(),
   response: z.string(),
   input_tokens: z.int(),
   output_tokens: z.int(),
@@ -42,7 +47,14 @@ export const RequestLogBaseSchema = z.object({
   cost_usd: z.int().nullable(),
 });
 export type RequestLogBaseSchema = z.infer<typeof RequestLogBaseSchema> & {
-  readonly __hasDefault__: readonly ["created_at", "project_name", "cost_usd", "id"];
+  readonly __hasDefault__: readonly [
+    "created_at",
+    "project_name",
+    "user_prompt",
+    "system_prompt",
+    "cost_usd",
+    "id",
+  ];
 };
 
 // BaseSchema: Token
@@ -108,7 +120,8 @@ export const RequestLogSubsetA = z.object({
   created_at: z.date(),
   token_name: z.string().max(100),
   project_name: z.string().max(50).nullable(),
-  query: z.string(),
+  user_prompt: z.string().nullable(),
+  system_prompt: z.string().nullable(),
   response: z.string(),
   input_tokens: z.int(),
   output_tokens: z.int(),

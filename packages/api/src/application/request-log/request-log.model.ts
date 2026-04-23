@@ -91,8 +91,8 @@ class RequestLogModelClass extends BaseModelClass<
         qb.where("request_logs.id", Number(params.keyword));
       } else if (params.search === "token_name") {
         qb.where("request_logs.token_name", "like", `%${params.keyword}%`);
-      } else if (params.search === "query") {
-        qb.where("request_logs.query", "like", `%${params.keyword}%`);
+      } else if (params.search === "user_prompt") {
+        qb.where("request_logs.user_prompt", "like", `%${params.keyword}%`);
       } else {
         throw new BadRequestException(SD("error.unknownSearchField")(params.search));
       }

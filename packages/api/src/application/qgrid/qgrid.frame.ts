@@ -41,7 +41,8 @@ class QgridFrameClass extends BaseFrameClass {
       {
         token_name: result.tokenName,
         project_name: projectName && projectName.length > 0 ? projectName : null,
-        query: system ? `[System]\n${system}\n\n[User]\n${prompt}` : prompt,
+        user_prompt: prompt,
+        system_prompt: system ?? null,
         response: result.text,
         input_tokens: result.usage.input_tokens,
         output_tokens: result.usage.output_tokens,
