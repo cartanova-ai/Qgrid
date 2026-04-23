@@ -161,15 +161,15 @@ class RequestLogModelClass extends BaseModelClass<
   }
 
   async distinctProjectNames(): Promise<string[]> {
-    const { rows } = await this.findMany("A", {
-      project_name_is_not_null: true,
-      num: 10_000,
-      page: 1,
-      queryMode: "list",
-    });
-    return [
-      ...new Set(rows.map((r) => r.project_name).filter((n): n is string => n !== null)),
-    ].toSorted();
+    const rows = await this.getPuri("r")
+      .from("request_logs")
+      .distinct("project_name")
+      .where("project_name", "!=", null)
+      .orderBy("project_name", "asc")
+      .select({
+        project_name: "project_name",
+      });
+    return rows.map((r) => r.project_name!);
   }
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })

@@ -7,7 +7,7 @@ import { type LogsSearch } from "@/routes/logs";
 import { QgridService, RequestLogService, TokenService } from "@/services/services.generated";
 import { type RequestLogSubsetMapping } from "@/services/sonamu.generated";
 
-type RequestLog = RequestLogSubsetMapping["A"];
+type RequestLog = RequestLogSubsetMapping["P"];
 
 const PAGE_SIZE = 50;
 const UNASSIGNED = "__unassigned__";
@@ -25,23 +25,17 @@ function formatNum(n: number): string {
   return n.toLocaleString();
 }
 
+function formatDuration(ms: number): string {
+  const total = Math.round(ms / 1000);
+  const m = Math.floor(total / 60);
+  const s = total % 60;
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
 function calcCacheHitRate(row: RequestLog): string {
   const denom = row.input_tokens + row.cache_read_tokens + row.cache_creation_tokens;
   if (denom === 0) return "—";
   return `${Math.round((row.cache_read_tokens / denom) * 100)}%`;
-}
-
-function trimText(q: string, maxLen = 40): string {
-  return q.length > maxLen ? `${q.slice(0, maxLen)}...` : q;
-}
-
-function PromptCell({ value, maxWidth }: { value: string | null; maxWidth: string }) {
-  if (!value) return <span className="text-sand-400">—</span>;
-  return (
-    <span className={`text-sand-700 truncate ${maxWidth} inline-block align-bottom`} title={value}>
-      {trimText(value)}
-    </span>
-  );
 }
 
 const COLUMNS: { label: string; align: "left" | "right"; width?: string }[] = [
@@ -50,14 +44,13 @@ const COLUMNS: { label: string; align: "left" | "right"; width?: string }[] = [
   { label: "Project", align: "left", width: "w-20" },
   { label: "Token", align: "left", width: "w-24" },
   { label: "Model", align: "left", width: "w-20" },
-  { label: "System", align: "left" },
-  { label: "User", align: "left" },
-  { label: "In", align: "right" },
-  { label: "Out", align: "right" },
-  { label: "C.Read", align: "right" },
-  { label: "C.Write", align: "right" },
-  { label: "Hit", align: "right" },
-  { label: "Cost", align: "right" },
+  { label: "Duration", align: "left", width: "w-20" },
+  { label: "In", align: "left", width: "w-16" },
+  { label: "Out", align: "left", width: "w-20" },
+  { label: "C.Read", align: "left", width: "w-20" },
+  { label: "C.Write", align: "left", width: "w-20" },
+  { label: "Hit", align: "left", width: "w-14" },
+  { label: "Cost", align: "left", width: "w-20" },
 ];
 
 interface RequestLogTableProps {
@@ -83,7 +76,7 @@ export function RequestLogTable({ search, onSearchChange }: RequestLogTableProps
     return {};
   })();
 
-  const { data, isLoading } = RequestLogService.useRequestLogs("A", {
+  const { data, isLoading } = RequestLogService.useRequestLogs("P", {
     num: PAGE_SIZE,
     page,
     orderBy: "id-desc" as const,
@@ -101,7 +94,7 @@ export function RequestLogTable({ search, onSearchChange }: RequestLogTableProps
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
+      <div className="flex items-center gap-2 mb-10 flex-wrap">
         {tokenNames.length > 0 && (
           <select
             value={tokenFilter}
@@ -145,19 +138,23 @@ export function RequestLogTable({ search, onSearchChange }: RequestLogTableProps
         <div className="text-sand-400 text-center py-12 text-sm">No requests yet.</div>
       ) : (
         <>
-          <div className="rounded-lg bg-sand-50 overflow-hidden">
-            <table className="w-full text-sm">
+          <div className="rounded-lg bg-sand-50 overflow-hidden w-fit mx-auto px-10 py-4">
+            <table className="text-sm">
               <thead>
                 <tr className="border-b border-sand-200">
-                  {COLUMNS.map((col) => (
-                    <th
-                      key={col.label}
-                      className={`text-${col.align} ${col.width ?? ""} ${col.width ? "whitespace-nowrap" : ""} px-2 py-1.5 text-[10px] uppercase text-sand-400 font-medium`}
-                    >
-                      {col.label}
-                    </th>
-                  ))}
-                  <th className="w-8 px-2 py-1.5" />
+                  {COLUMNS.map((col) => {
+                    const padX =
+                      col.label === "Duration" ? "pl-5 pr-3" : col.width ? "px-4" : "px-3";
+                    return (
+                      <th
+                        key={col.label}
+                        className={`text-${col.align} ${col.width ?? ""} ${col.width ? "whitespace-nowrap" : ""} ${padX} py-1.5 text-[10px] uppercase text-sand-400 font-medium`}
+                      >
+                        {col.label}
+                      </th>
+                    );
+                  })}
+                  <th className="w-8" />
                 </tr>
               </thead>
               <tbody className="divide-y divide-sand-200/60">
@@ -173,7 +170,7 @@ export function RequestLogTable({ search, onSearchChange }: RequestLogTableProps
                       navigate({ to: "/requests/show", search: { id: row.id } });
                     }}
                   >
-                    <td className="px-2 py-1.5 whitespace-nowrap">
+                    <td className="px-4 py-1.5 whitespace-nowrap">
                       <Link
                         to="/requests/show"
                         search={{ id: row.id }}
@@ -183,42 +180,39 @@ export function RequestLogTable({ search, onSearchChange }: RequestLogTableProps
                         {row.id}
                       </Link>
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap">
+                    <td className="px-4 py-1.5 whitespace-nowrap">
                       <span className="text-xs text-sand-400 tabular-nums">
                         {formatDateTime(row.created_at as unknown as string)}
                       </span>
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap">
+                    <td className="px-4 py-1.5 whitespace-nowrap">
                       <span className="text-xs text-sand-600">{row.project_name ?? "—"}</span>
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap">
+                    <td className="px-4 py-1.5 whitespace-nowrap">
                       <span className="text-xs text-sand-500">{row.token_name}</span>
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap">
+                    <td className="px-4 py-1.5 whitespace-nowrap">
                       <span className="text-xs text-sand-500">{row.model_name ?? "—"}</span>
                     </td>
-                    <td className="px-3 py-1.5">
-                      <PromptCell value={row.system_prompt} maxWidth="max-w-80" />
+                    <td className="pl-5 pr-3 py-1.5 text-left tabular-nums text-sand-500 whitespace-nowrap">
+                      {formatDuration(row.duration_ms)}
                     </td>
-                    <td className="px-3 py-1.5">
-                      <PromptCell value={row.user_prompt} maxWidth="max-w-96" />
-                    </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {formatNum(row.input_tokens)}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {formatNum(row.output_tokens)}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {formatNum(row.cache_read_tokens)}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {formatNum(row.cache_creation_tokens)}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {calcCacheHitRate(row)}
                     </td>
-                    <td className="px-3 py-1.5 text-right tabular-nums text-sand-700">
+                    <td className="px-3 py-1.5 text-left tabular-nums text-sand-700">
                       {row.cost_usd !== null ? formatMicroUsd(row.cost_usd) : "—"}
                     </td>
                     <td className="px-2 py-1.5">

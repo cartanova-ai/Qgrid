@@ -135,10 +135,25 @@ export const RequestLogSubsetA = z.object({
   cost_usd: z.int().nullable(),
 });
 export type RequestLogSubsetA = z.infer<typeof RequestLogSubsetA>;
+export const RequestLogSubsetP = z.object({
+  id: z.int(),
+  created_at: z.date(),
+  token_name: z.string().max(100),
+  project_name: z.string().max(50).nullable(),
+  model_name: z.string().max(50).nullable(),
+  input_tokens: z.int(),
+  output_tokens: z.int(),
+  cache_read_tokens: z.int(),
+  cache_creation_tokens: z.int(),
+  duration_ms: z.int(),
+  cost_usd: z.int().nullable(),
+});
+export type RequestLogSubsetP = z.infer<typeof RequestLogSubsetP>;
 export type RequestLogSubsetMapping = {
   A: RequestLogSubsetA;
+  P: RequestLogSubsetP;
 };
-export const RequestLogSubsetKey = z.enum(["A"]);
+export const RequestLogSubsetKey = z.enum(["A", "P"]);
 export type RequestLogSubsetKey = z.infer<typeof RequestLogSubsetKey>;
 
 // Subsets: Token
