@@ -85,6 +85,9 @@ GET {{baseUrl}}/api/requestLog/findMany
 	&rawParams[sonamuFilter]=unknown-custom
 	&rawParams[token_name]=TOKEN_NAME
 	&rawParams[project_name]=
+	&rawParams[model_name]=
+	&rawParams[project_name_is_null]=false
+	&rawParams[project_name_is_not_null]=false
 Content-Type: application/json
 
 ###
@@ -99,7 +102,8 @@ Content-Type: application/json
       "created_at": "2000-01-01",
       "token_name": "TOKEN_NAME",
       "project_name": null,
-      "user_prompt": "USER_PROMPT",
+      "model_name": null,
+      "user_prompt": null,
       "system_prompt": null,
       "response": "RESPONSE",
       "input_tokens": 0,
@@ -146,6 +150,12 @@ Content-Type: application/json
 
 GET {{baseUrl}}/api/qgrid/totalCost
 	?tokenName=TOKENNAME
+Content-Type: application/json
+
+###
+
+GET {{baseUrl}}/api/qgrid/projectNames
+	?
 Content-Type: application/json
 
 ###

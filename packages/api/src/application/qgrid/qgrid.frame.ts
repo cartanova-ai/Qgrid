@@ -41,6 +41,7 @@ class QgridFrameClass extends BaseFrameClass {
       {
         token_name: result.tokenName,
         project_name: projectName && projectName.length > 0 ? projectName : null,
+        model_name: result.model ?? null,
         user_prompt: prompt,
         system_prompt: system ?? null,
         response: result.text,
@@ -64,6 +65,11 @@ class QgridFrameClass extends BaseFrameClass {
   @api({ httpMethod: "GET", clients: ["axios", "tanstack-query"] })
   async totalCost(tokenName?: string): Promise<{ usd: number }> {
     return { usd: await RequestLogModel.totalCost({ token_name: tokenName }) };
+  }
+
+  @api({ httpMethod: "GET", clients: ["axios", "tanstack-query"] })
+  async projectNames(): Promise<{ names: string[] }> {
+    return { names: await RequestLogModel.distinctProjectNames() };
   }
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })

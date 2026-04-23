@@ -20,6 +20,7 @@ export const requestLogSubsetQueries = {
       created_at: "request_logs.created_at",
       token_name: "request_logs.token_name",
       project_name: "request_logs.project_name",
+      model_name: "request_logs.model_name",
       user_prompt: "request_logs.user_prompt",
       system_prompt: "request_logs.system_prompt",
       response: "request_logs.response",

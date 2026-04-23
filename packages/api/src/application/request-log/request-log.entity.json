@@ -31,6 +31,14 @@
       "length": 50,
       "nullable": true
     },
+    {
+      "name": "model_name",
+      "toFilter": true,
+      "desc": "모델 이름",
+      "type": "string",
+      "length": 50,
+      "nullable": true
+    },
     { "name": "user_prompt", "type": "string", "nullable": true, "desc": "사용자 프롬프트" },
     { "name": "system_prompt", "type": "string", "nullable": true, "desc": "시스템 프롬프트" },
     { "name": "response", "desc": "llm 응답 전문", "type": "string" },
@@ -62,6 +70,7 @@
         "created_at",
         "token_name",
         "project_name",
+        "model_name",
         "user_prompt",
         "system_prompt",
         "response",

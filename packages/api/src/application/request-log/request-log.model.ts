@@ -82,8 +82,16 @@ class RequestLogModelClass extends BaseModelClass<
       qb.where("request_logs.token_name", "like", `${params.token_name}-%`);
     }
 
-    if (params.project_name) {
+    if (params.project_name_is_null) {
+      qb.where("request_logs.project_name", null);
+    } else if (params.project_name_is_not_null) {
+      qb.where("request_logs.project_name", "!=", null);
+    } else if (params.project_name) {
       qb.where("request_logs.project_name", params.project_name);
+    }
+
+    if (params.model_name) {
+      qb.where("request_logs.model_name", params.model_name);
     }
 
     if (params.search && params.keyword && params.keyword.length > 0) {
@@ -150,6 +158,18 @@ class RequestLogModelClass extends BaseModelClass<
     // knex는 pg에서 numeric aggregate를 string으로 반환.
     const row = (await qb.sum({ sum: "cost_usd" }).first()) as { sum: string | null } | undefined;
     return Number(row?.sum ?? 0) / MICRO_USD;
+  }
+
+  async distinctProjectNames(): Promise<string[]> {
+    const { rows } = await this.findMany("A", {
+      project_name_is_not_null: true,
+      num: 10_000,
+      page: 1,
+      queryMode: "list",
+    });
+    return [
+      ...new Set(rows.map((r) => r.project_name).filter((n): n is string => n !== null)),
+    ].toSorted();
   }
 
   @api({ httpMethod: "POST", clients: ["axios", "tanstack-mutation"] })

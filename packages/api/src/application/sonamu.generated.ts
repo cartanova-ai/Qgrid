@@ -36,6 +36,7 @@ export const RequestLogBaseSchema = z.object({
   created_at: z.date(),
   token_name: z.string().max(100),
   project_name: z.string().max(50).nullable(),
+  model_name: z.string().max(50).nullable(),
   user_prompt: z.string().nullable(),
   system_prompt: z.string().nullable(),
   response: z.string(),
@@ -50,6 +51,7 @@ export type RequestLogBaseSchema = z.infer<typeof RequestLogBaseSchema> & {
   readonly __hasDefault__: readonly [
     "created_at",
     "project_name",
+    "model_name",
     "user_prompt",
     "system_prompt",
     "cost_usd",
@@ -94,6 +96,7 @@ export const RequestLogBaseListParams = z
     sonamuFilter: z.custom<ApplySonamuFilter<RequestLogBaseSchema, never, never>>(),
     token_name: z.string().max(100),
     project_name: z.string().max(50).nullable(),
+    model_name: z.string().max(50).nullable(),
   })
   .partial();
 export type RequestLogBaseListParams = z.infer<typeof RequestLogBaseListParams>;
@@ -120,6 +123,7 @@ export const RequestLogSubsetA = z.object({
   created_at: z.date(),
   token_name: z.string().max(100),
   project_name: z.string().max(50).nullable(),
+  model_name: z.string().max(50).nullable(),
   user_prompt: z.string().nullable(),
   system_prompt: z.string().nullable(),
   response: z.string(),

@@ -13,6 +13,7 @@ export type QueryInput = z.infer<typeof QueryInput>;
 export const CliResult = z.object({
   text: z.string(),
   tokenName: z.string().optional(),
+  model: z.string().optional(),
   usage: z.object({
     input_tokens: z.number(),
     output_tokens: z.number(),

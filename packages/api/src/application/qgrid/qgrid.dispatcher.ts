@@ -55,7 +55,7 @@ class QgridDispatcherClass {
     console.log(`[qgrid] → ${sel.name} (model: ${input.model ?? DEFAULT_MODEL})`);
 
     const result = await executeClaude(input, sel.token, timeoutMs ?? DEFAULT_TIMEOUT_MS);
-    return { ...result, tokenName: sel.name };
+    return { ...result, tokenName: sel.name, model: input.model ?? DEFAULT_MODEL };
   }
 
   addToken(token: string, name: string): void {
