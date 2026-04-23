@@ -51,12 +51,13 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
   prompt: string;
   system?: string;
   model?: QgridModel;
+  projectName?: string;
   returnType?: T;
   timeout?: number;
   serverUrl?: string;
   maxAttempts?: number;
 }): Promise<T extends z.ZodType ? QgridTypedResponse<z.infer<T>> : QgridResponse> {
-  const { prompt, system, model, returnType } = params;
+  const { prompt, system, model, projectName, returnType } = params;
   const cliModel = model ? toCliModel(model) : undefined;
   const url = params.serverUrl ?? process.env.QGRID_URL ?? "http://localhost:44900";
   const timeout = params.timeout ?? 300_000;
@@ -72,7 +73,7 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
     const res = await fetch(`${url}/api/qgrid/query`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, system: systemWithSchema, model: cliModel }),
+      body: JSON.stringify({ prompt, system: systemWithSchema, model: cliModel, projectName }),
       signal: AbortSignal.timeout(timeout),
     });
     if (!res.ok) {
@@ -142,6 +143,7 @@ type BaseParams = Omit<
   prompt: string;
   system?: string;
   model?: QgridModel;
+  projectName?: string;
   serverUrl?: string;
   maxAttempts?: number;
 };
@@ -169,6 +171,7 @@ export async function generateText(
   const schema = extractSchema(params.output);
   const rest = {
     model: params.model,
+    projectName: params.projectName,
     serverUrl: params.serverUrl,
     maxAttempts: params.maxAttempts,
   };
