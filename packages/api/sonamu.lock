@@ -13,7 +13,7 @@
   },
   {
     "path": "src/application/request-log/request-log.model.ts",
-    "checksum": "1eca3a1c33687c87e55fa355839ab8c2dafbaa23"
+    "checksum": "af9f8be8f48d2554b0745e530752652a2bfea9cc"
   },
   {
     "path": "src/application/request-log/request-log.types.ts",

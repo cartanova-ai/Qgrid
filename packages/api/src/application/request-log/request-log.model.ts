@@ -79,7 +79,7 @@ class RequestLogModelClass extends BaseModelClass<
     }
 
     if (params.token_name) {
-      qb.where("request_logs.token_name", "like", `${params.token_name}-%`);
+      qb.where("request_logs.token_name", params.token_name);
     }
 
     if (params.project_name_is_null) {
@@ -153,7 +153,7 @@ class RequestLogModelClass extends BaseModelClass<
   async totalCost(params: { token_name?: string } = {}): Promise<number> {
     const qb = this.getDB("r")("request_logs");
     if (params.token_name) {
-      qb.where("token_name", "like", `${params.token_name}-%`);
+      qb.where("token_name", params.token_name);
     }
     // knex는 pg에서 numeric aggregate를 string으로 반환.
     const row = (await qb.sum({ sum: "cost_usd" }).first()) as { sum: string | null } | undefined;
