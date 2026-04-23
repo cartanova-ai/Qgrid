@@ -3,7 +3,7 @@
  */
 import { createHash, randomBytes } from "node:crypto";
 
-import type { UsageResponse } from "./qgrid.types";
+import { type UsageResponse } from "./qgrid.types";
 
 const CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e";
 const AUTHORIZE_URL = "https://claude.com/cai/oauth/authorize";
