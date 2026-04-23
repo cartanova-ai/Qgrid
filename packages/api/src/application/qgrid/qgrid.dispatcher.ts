@@ -1,0 +1,184 @@
+/**
+ * QgridDispatcher — OAuth 토큰 선택 + claude CLI fresh spawn 디스패처 싱글턴.
+ *
+ * - 매 요청마다 새 claude CLI 프로세스 spawn → 응답 후 종료
+ * - system 은 --append-system-prompt 로 분리 전달 (user turn 오염 방지)
+ * - least-used round-robin 으로 토큰 선택
+ * - QuotaError 는 그대로 상위 전파 (자동 failover 없음, UI 에서 수동 토글)
+ *
+ * env allowlist: PATH, TMPDIR, CLAUDE_CODE_OAUTH_TOKEN + CLAUDE_CODE_DISABLE_*
+ */
+import { spawn } from "node:child_process";
+import { mkdirSync } from "node:fs";
+
+import { type CliResult, type QueryInput, type TokenStats } from "./qgrid.types";
+import { maskToken, ProcessError, QuotaError, TimeoutError } from "./qgrid.types";
+
+const DEFAULT_MODEL = "sonnet";
+const DEFAULT_TIMEOUT_MS = 600_000;
+
+class QgridDispatcherClass {
+  tokens = new Map<string, string>();
+  requestCounts = new Map<string, number>();
+  rrIndex = 0;
+
+  constructor() {
+    mkdirSync("/tmp/qgrid", { recursive: true });
+  }
+
+  getStats(): TokenStats[] {
+    return [...this.tokens.entries()].map(([token, name]) => ({
+      token,
+      name,
+      requests: this.requestCounts.get(token) ?? 0,
+    }));
+  }
+
+  selectToken(): { token: string; name: string } | null {
+    const entries = [...this.tokens.entries()];
+    if (entries.length === 0) return null;
+
+    const minCount = Math.min(...entries.map(([t]) => this.requestCounts.get(t) ?? 0));
+    const idle = entries.filter(([t]) => (this.requestCounts.get(t) ?? 0) === minCount);
+    const picked = idle[this.rrIndex % idle.length]!;
+    this.rrIndex++;
+    return { token: picked[0], name: picked[1] };
+  }
+
+  async query(input: QueryInput, timeoutMs?: number): Promise<CliResult> {
+    const sel = this.selectToken();
+    if (!sel) throw new QuotaError("No tokens available");
+
+    // await 전에 count 선반영. 병렬 요청이 동시에 도착해도 각자 다른 토큰을 고르도록.
+    this.requestCounts.set(sel.token, (this.requestCounts.get(sel.token) ?? 0) + 1);
+
+    console.log(`[qgrid] → ${sel.name} (model: ${input.model ?? DEFAULT_MODEL})`);
+
+    const result = await executeClaude(input, sel.token, timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    return { ...result, tokenName: sel.name };
+  }
+
+  addToken(token: string, name: string): void {
+    if (this.tokens.has(token)) return;
+    this.tokens.set(token, name);
+    this.requestCounts.set(token, 0);
+  }
+
+  removeToken(token: string): void {
+    this.tokens.delete(token);
+    this.requestCounts.delete(token);
+  }
+
+  hasToken(token: string): boolean {
+    return this.tokens.has(token);
+  }
+}
+
+async function executeClaude(
+  input: QueryInput,
+  token: string,
+  timeoutMs: number,
+): Promise<CliResult> {
+  const model = input.model ?? DEFAULT_MODEL;
+  const timeout = input.timeout ?? timeoutMs;
+
+  const args: string[] = [
+    "-p",
+    "--output-format",
+    "stream-json",
+    "--verbose",
+    "--max-turns",
+    "1",
+    "--permission-mode",
+    "bypassPermissions",
+    "--setting-sources",
+    "project",
+    "--model",
+    model,
+  ];
+  if (input.system) {
+    args.push("--append-system-prompt", input.system);
+  }
+  args.push(input.prompt);
+
+  const env: NodeJS.ProcessEnv = {
+    PATH: process.env.PATH,
+    TMPDIR: process.env.TMPDIR,
+    CLAUDE_CODE_OAUTH_TOKEN: token,
+    CLAUDE_CODE_DISABLE_AUTO_MEMORY: "1",
+    CLAUDE_CODE_DISABLE_ADAPTIVE_THINKING: "1",
+    CLAUDE_CODE_DISABLE_1M_CONTEXT: "1",
+  };
+
+  return new Promise<CliResult>((resolve, reject) => {
+    const child = spawn("claude", args, {
+      stdio: ["ignore", "pipe", "ignore"],
+      env,
+      cwd: "/tmp/qgrid",
+    });
+
+    let buffer = "";
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      child.kill();
+      reject(new TimeoutError(`Timeout after ${timeout / 1000}s (token: ${maskToken(token)})`));
+    }, timeout);
+
+    child.stdout?.on("data", (d: Buffer) => {
+      if (settled) return;
+      buffer += d.toString();
+      const lines = buffer.split("\n");
+      buffer = lines.pop() ?? "";
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const j = JSON.parse(line);
+          if (j.type === "result" && !settled) {
+            let text: string = j.result ?? "";
+            text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
+
+            if (text.startsWith("You've hit")) {
+              settled = true;
+              clearTimeout(timer);
+              reject(new QuotaError(`Quota exhausted (token: ${maskToken(token)})`));
+              return;
+            }
+
+            const u = j.usage ?? {};
+            settled = true;
+            clearTimeout(timer);
+            resolve({
+              text,
+              usage: {
+                input_tokens: u.input_tokens ?? 0,
+                output_tokens: u.output_tokens ?? 0,
+                cache_creation_input_tokens: u.cache_creation_input_tokens ?? 0,
+                cache_read_input_tokens: u.cache_read_input_tokens ?? 0,
+              },
+              durationMs: j.duration_ms ?? 0,
+              costUsd: j.total_cost_usd ?? 0,
+            });
+          }
+        } catch {}
+      }
+    });
+
+    child.on("close", () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(new ProcessError(`CLI process closed without result (token: ${maskToken(token)})`));
+    });
+
+    child.on("error", (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      reject(new ProcessError(`CLI process error: ${err.message} (token: ${maskToken(token)})`));
+    });
+  });
+}
+
+export const QgridDispatcher = new QgridDispatcherClass();

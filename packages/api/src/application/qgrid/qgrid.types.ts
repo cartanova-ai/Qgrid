@@ -5,12 +5,14 @@ import { z } from "zod";
 export const QueryInput = z.object({
   system: z.string().optional(),
   prompt: z.string(),
+  model: z.string().optional(),
   timeout: z.number().optional(),
 });
 export type QueryInput = z.infer<typeof QueryInput>;
 
 export const CliResult = z.object({
   text: z.string(),
+  tokenName: z.string().optional(),
   usage: z.object({
     input_tokens: z.number(),
     output_tokens: z.number(),
@@ -21,18 +23,6 @@ export const CliResult = z.object({
   costUsd: z.number(),
 });
 export type CliResult = z.infer<typeof CliResult>;
-
-// ─── Pool Config ───
-
-export const PoolConfig = z.object({
-  tokens: z.array(z.object({ token: z.string(), name: z.string() })),
-  size: z.number().optional(),
-  model: z.string().optional(),
-  timeout: z.number().optional(),
-  cwd: z.string().optional(),
-  maxCalls: z.number().optional(),
-});
-export type PoolConfig = z.infer<typeof PoolConfig>;
 
 // ─── Token Management ───
 
@@ -51,7 +41,6 @@ export const TokenStats = z.object({
   token: z.string(),
   name: z.string(),
   requests: z.number(),
-  active: z.boolean(),
 });
 export type TokenStats = z.infer<typeof TokenStats>;
 
@@ -93,7 +82,6 @@ export type UsageResponse = z.infer<typeof UsageResponse>;
 
 export const HealthResponse = z.object({
   status: z.string(),
-  workers: z.number(),
   activeTokens: z.number(),
 });
 export type HealthResponse = z.infer<typeof HealthResponse>;
