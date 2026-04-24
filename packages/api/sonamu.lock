@@ -1,11 +1,11 @@
 [
   {
     "path": "src/application/qgrid/qgrid.frame.ts",
-    "checksum": "eb81d5c795c4f4bfa34be4ec1925eca2df87ff58"
+    "checksum": "2720fbd9fb69d1bca3edaf87bdbda2371375ab20"
   },
   {
     "path": "src/application/qgrid/qgrid.types.ts",
-    "checksum": "ed0412a28a6a5ba58cf2799a0cb0b9906bcd8d2e"
+    "checksum": "e331babdfb5c3d352100b117f934046003b33248"
   },
   {
     "path": "src/application/request-log/request-log.entity.json",

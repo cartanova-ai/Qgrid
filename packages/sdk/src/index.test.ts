@@ -16,7 +16,11 @@ const MOCK_USAGE = {
 
 const server = setupServer(
   http.post("http://localhost:44900/api/qgrid/query", async ({ request }) => {
-    const body = (await request.json()) as { prompt: string; system?: string };
+    const body = (await request.json()) as {
+      prompt: string;
+      system?: string;
+      jsonSchema?: string;
+    };
 
     // 특수 프롬프트로 에러 시나리오 테스트
     if (body.prompt === "__error_429__") {
@@ -37,42 +41,8 @@ const server = setupServer(
       });
     }
 
-    // primitive returnType 케이스: LLM이 따옴표 없이 raw로 반환
-    if (body.prompt === "__raw_enum__") {
-      return HttpResponse.json({
-        text: "YES",
-        usage: MOCK_USAGE,
-        durationMs: 100,
-        costUsd: 0.01,
-      });
-    }
-    if (body.prompt === "__raw_number__") {
-      return HttpResponse.json({
-        text: "42",
-        usage: MOCK_USAGE,
-        durationMs: 100,
-        costUsd: 0.01,
-      });
-    }
-    if (body.prompt === "__raw_boolean__") {
-      return HttpResponse.json({
-        text: "true",
-        usage: MOCK_USAGE,
-        durationMs: 100,
-        costUsd: 0.01,
-      });
-    }
-    if (body.prompt === "__quoted_string__") {
-      return HttpResponse.json({
-        text: '"YES"',
-        usage: MOCK_USAGE,
-        durationMs: 100,
-        costUsd: 0.01,
-      });
-    }
-
-    // JSON 응답 요청 (system에 JSON Schema가 포함된 경우)
-    if (body.system?.includes("JSON Schema")) {
+    // jsonSchema 가 body 에 오면 structured output 모의 (JSON-encoded 문자열)
+    if (body.jsonSchema) {
       return HttpResponse.json({
         text: JSON.stringify({ questions: ["Q1", "Q2", "Q3"] }),
         usage: MOCK_USAGE,
@@ -140,39 +110,16 @@ describe("queryQgrid", () => {
     });
   });
 
-  it("JSON 파싱 실패 시 재시도 후 PARSE_FAILED", async () => {
+  it("JSON 파싱 실패 시 PARSE_FAILED", async () => {
     const schema = z.object({ name: z.string() });
     await expect(
-      queryQgrid({ prompt: "__invalid_json__", returnType: schema, maxAttempts: 1 }),
+      queryQgrid({ prompt: "__invalid_json__", returnType: schema }),
     ).rejects.toMatchObject({
       code: "PARSE_FAILED",
       status: 200,
     });
   });
 
-  it("z.enum: LLM이 raw 값 반환해도 처리", async () => {
-    const schema = z.enum(["YES", "NO"]);
-    const result = await queryQgrid({ prompt: "__raw_enum__", returnType: schema });
-    expect(result.data).toBe("YES");
-  });
-
-  it("z.enum: LLM이 따옴표 감싸서 반환해도 처리", async () => {
-    const schema = z.enum(["YES", "NO"]);
-    const result = await queryQgrid({ prompt: "__quoted_string__", returnType: schema });
-    expect(result.data).toBe("YES");
-  });
-
-  it("z.number: raw 숫자 반환", async () => {
-    const schema = z.number();
-    const result = await queryQgrid({ prompt: "__raw_number__", returnType: schema });
-    expect(result.data).toBe(42);
-  });
-
-  it("z.boolean: raw boolean 반환", async () => {
-    const schema = z.boolean();
-    const result = await queryQgrid({ prompt: "__raw_boolean__", returnType: schema });
-    expect(result.data).toBe(true);
-  });
 });
 
 // --- generateText (ai-sdk 호환) ---

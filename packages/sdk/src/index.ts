@@ -37,7 +37,10 @@ const jsonSchemaCache = new WeakMap<z.ZodType, string>();
 function getJsonSchemaString(schema: z.ZodType): string {
   let cached = jsonSchemaCache.get(schema);
   if (!cached) {
-    cached = JSON.stringify(z.toJSONSchema(schema));
+    // `$schema` / `additionalProperties` 같은 (openAPI json spec)메타 필드는 Anthropic `--json-schema` 가
+    const raw = z.toJSONSchema(schema) as Record<string, unknown>;
+    const { $schema: _s, ...rest } = raw;
+    cached = JSON.stringify(rest);
     jsonSchemaCache.set(schema, cached);
   }
   return cached;
@@ -55,58 +58,46 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
   returnType?: T;
   timeout?: number;
   serverUrl?: string;
-  maxAttempts?: number;
 }): Promise<T extends z.ZodType ? QgridTypedResponse<z.infer<T>> : QgridResponse> {
   const { prompt, system, model, projectName, returnType } = params;
   const cliModel = model ? toCliModel(model) : undefined;
   const url = params.serverUrl ?? process.env.QGRID_URL ?? "http://localhost:44900";
   const timeout = params.timeout ?? 300_000;
-  const maxAttempts = params.maxAttempts ?? 3;
 
-  const systemWithSchema = returnType
-    ? `${system ?? ""}\n\n반드시 다음 JSON Schema에 맞게 JSON으로만 응답하세요. 다른 텍스트 없이:\n${getJsonSchemaString(returnType)}`
-    : system;
+  // returnType 있으면 CLI 의 --json-schema 를 사용. schema 가 system prompt 에 들어가지 않고
+  // Anthropic API 의 structured output (tool) 로 네이티브 전달됨 → prefix cache 절감, 파싱 실패 없음.
+  const jsonSchema = returnType ? getJsonSchemaString(returnType) : undefined;
 
-  let lastError: Error | null = null;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    const res = await fetch(`${url}/api/qgrid/query`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, system: systemWithSchema, model: cliModel, projectName }),
-      signal: AbortSignal.timeout(timeout),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({ error: res.statusText }));
-      const message = err.error ?? err.message ?? res.statusText;
-      if (res.status === 429) throw new QgridError("QUOTA_EXHAUSTED", 429, message);
-      if (res.status === 503) throw new QgridError("SERVER_UNAVAILABLE", 503, message);
-      throw new QgridError("REQUEST_FAILED", res.status, message);
-    }
-
-    const { text, ...rest } = await res.json();
-    if (!returnType) {
-      return { ...rest, data: text } as any;
-    }
-
-    try {
-      // object/array/quoted-string/number/bool/null은 JSON.parse, 나머지는 raw string 그대로
-      const isJsonLike = /^[{["]|^-?\d|^(true|false|null)$/.test(text);
-      const parsed = isJsonLike ? JSON.parse(text) : text;
-      return { ...rest, data: z.parse(returnType, parsed) } as any;
-    } catch (e) {
-      lastError = e as Error;
-      if (attempt < maxAttempts) {
-        console.warn(`[qgrid] JSON 파싱 실패 (attempt ${attempt}/${maxAttempts}), 재시도...`);
-      }
-    }
+  const res = await fetch(`${url}/api/qgrid/query`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prompt, system, model: cliModel, projectName, jsonSchema }),
+    signal: AbortSignal.timeout(timeout),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    const message = err.error ?? err.message ?? res.statusText;
+    if (res.status === 429) throw new QgridError("QUOTA_EXHAUSTED", 429, message);
+    if (res.status === 503) throw new QgridError("SERVER_UNAVAILABLE", 503, message);
+    throw new QgridError("REQUEST_FAILED", res.status, message);
   }
 
-  throw new QgridError(
-    "PARSE_FAILED",
-    200,
-    `JSON 파싱/검증 실패 (${maxAttempts}회 시도): ${lastError?.message}`,
-  );
+  const { text, ...rest } = await res.json();
+  if (!returnType) {
+    return { ...rest, data: text } as any;
+  }
+
+  // structured output 은 서버가 이미 JSON 문자열로 직렬화해서 넘겨줌. 파싱 + zod 검증만.
+  try {
+    const parsed = JSON.parse(text);
+    return { ...rest, data: z.parse(returnType, parsed) } as any;
+  } catch (e) {
+    throw new QgridError(
+      "PARSE_FAILED",
+      200,
+      `structured output 파싱/검증 실패: ${(e as Error).message}`,
+    );
+  }
 }
 
 // --- ai-sdk 호환 API (single-turn 전용) ---
@@ -145,7 +136,6 @@ type BaseParams = Omit<
   model?: QgridModel;
   projectName?: string;
   serverUrl?: string;
-  maxAttempts?: number;
 };
 
 type GenerateTextResponse<T> = {
@@ -173,7 +163,6 @@ export async function generateText(
     model: params.model,
     projectName: params.projectName,
     serverUrl: params.serverUrl,
-    maxAttempts: params.maxAttempts,
   };
 
   if (schema) {
