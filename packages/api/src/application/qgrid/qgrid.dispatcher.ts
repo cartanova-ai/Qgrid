@@ -96,14 +96,23 @@ async function executeClaude(
 ): Promise<CliResult> {
   const model = input.model ?? DEFAULT_MODEL;
   const timeout = input.timeout ?? timeoutMs;
+  const useStructuredOutput = input.jsonSchema && input.jsonSchema.length > 0;
+
+  // --tools "" 로 모든 tool 을 기본 차단. structured output 쓰면 StructuredOutput 만 화이트리스트.
+  // --tools "" 는 반드시 뒤에 다른 플래그가 와야 CLI 파싱이 빈 문자열로 인식
+  const toolArgs = useStructuredOutput
+    ? ["--tools", "", "--allowed-tools", "StructuredOutput"]
+    : ["--tools", ""];
 
   const args: string[] = [
     "-p",
+    ...toolArgs,
     "--output-format",
     "stream-json",
     "--verbose",
     "--max-turns",
-    "1",
+    // structured output 은 tool_use + tool_result 로 2턴 소비
+    useStructuredOutput ? "2" : "1",
     "--permission-mode",
     "bypassPermissions",
     "--setting-sources",
@@ -111,11 +120,12 @@ async function executeClaude(
     "--model",
     model,
     // thinking 비활성화는 project settings (alwaysThinkingEnabled: false) 에서 처리
-    "--tools",
-    "",
     "--exclude-dynamic-system-prompt-sections", // cwd/env 를 user msg 로 이동 → prefix cache 안정화
     "--no-session-persistence", // ~/.claude/projects/ 의 orphan jsonl 누적 방지
   ];
+  if (useStructuredOutput) {
+    args.push("--json-schema", input.jsonSchema!);
+  }
   if (input.system) {
     args.push("--append-system-prompt", input.system);
   }
@@ -156,8 +166,15 @@ async function executeClaude(
         try {
           const j = JSON.parse(line);
           if (j.type === "result" && !settled) {
-            let text: string = j.result ?? "";
-            text = text.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
+            // --json-schema 사용 시 structured_output 에 파싱된 객체가 온다 → 우선 사용
+            let text: string;
+            if (j.structured_output !== undefined) {
+              text = JSON.stringify(j.structured_output);
+            } else {
+              text = (j.result ?? "")
+                .replace(/^```(?:json)?\s*\n?/i, "")
+                .replace(/\n?```\s*$/i, "");
+            }
 
             if (text.startsWith("You've hit")) {
               settled = true;

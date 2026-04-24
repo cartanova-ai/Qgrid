@@ -7,6 +7,7 @@ export const QueryInput = z.object({
   prompt: z.string(),
   model: z.string().optional(),
   timeout: z.number().optional(),
+  jsonSchema: z.string().optional(),
 });
 export type QueryInput = z.infer<typeof QueryInput>;
 

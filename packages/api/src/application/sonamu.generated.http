@@ -137,7 +137,8 @@ Content-Type: application/json
   "system": "SYSTEM",
   "timeout": 0,
   "model": "MODEL",
-  "projectName": "PROJECTNAME"
+  "projectName": "PROJECTNAME",
+  "jsonSchema": "JSONSCHEMA"
 }
 
 ###

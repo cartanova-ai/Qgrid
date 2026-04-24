@@ -312,11 +312,12 @@ export namespace QgridService {
     timeout?: number,
     model?: string,
     projectName?: string,
+    jsonSchema?: string,
   ): Promise<CliResult> {
     return fetch({
       method: "POST",
       url: `/api/qgrid/query`,
-      data: { prompt, system, timeout, model, projectName },
+      data: { prompt, system, timeout, model, projectName, jsonSchema },
     });
   }
 
@@ -328,7 +329,16 @@ export namespace QgridService {
         timeout: number;
         model: string;
         projectName: string;
-      }) => query(params.prompt, params.system, params.timeout, params.model, params.projectName),
+        jsonSchema: string;
+      }) =>
+        query(
+          params.prompt,
+          params.system,
+          params.timeout,
+          params.model,
+          params.projectName,
+          params.jsonSchema,
+        ),
     });
 
   export async function stats(): Promise<TokenStats[]> {

@@ -34,8 +34,9 @@ class QgridFrameClass extends BaseFrameClass {
     timeout?: number,
     model?: string,
     projectName?: string,
+    jsonSchema?: string,
   ): Promise<CliResult> {
-    const result = await QgridDispatcher.query({ system, prompt, model }, timeout);
+    const result = await QgridDispatcher.query({ system, prompt, model, jsonSchema }, timeout);
 
     RequestLogModel.save([
       {
