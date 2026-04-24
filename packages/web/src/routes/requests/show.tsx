@@ -1,4 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import JsonView from "@uiw/react-json-view";
+import { lightTheme } from "@uiw/react-json-view/light";
 import { useEffect, useState } from "react";
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -45,63 +47,6 @@ function tryParseJson(text: string): unknown | null {
   } catch {
     return null;
   }
-}
-
-function JsonValue({ value, defaultOpen = true }: { value: unknown; defaultOpen?: boolean }) {
-  if (value === null) return <span className="text-sand-400">null</span>;
-  if (value === undefined) return <span className="text-sand-400">undefined</span>;
-  if (typeof value === "boolean") return <span className="text-amber-600">{String(value)}</span>;
-  if (typeof value === "number") return <span className="text-blue-600">{String(value)}</span>;
-  if (typeof value === "string") {
-    if (value.length > 200) {
-      return (
-        <details className="inline">
-          <summary className="cursor-pointer text-sage-700">
-            &quot;{value.slice(0, 80)}...&quot;{" "}
-            <span className="text-sand-400 text-[10px]">({value.length} chars)</span>
-          </summary>
-          <pre className="mt-1 ml-2 text-sage-700 whitespace-pre-wrap wrap-break-word">
-            &quot;{value}&quot;
-          </pre>
-        </details>
-      );
-    }
-    return <span className="text-sage-700">&quot;{value}&quot;</span>;
-  }
-  if (Array.isArray(value)) {
-    if (value.length === 0) return <span className="text-sand-500">[]</span>;
-    return (
-      <details open={defaultOpen} className="inline-block w-full">
-        <summary className="cursor-pointer text-sand-500">[]</summary>
-        <div className="ml-4 border-l border-sand-200 pl-3">
-          {value.map((item, i) => (
-            <div key={i} className="py-0.5">
-              <JsonValue value={item} defaultOpen />
-            </div>
-          ))}
-        </div>
-      </details>
-    );
-  }
-  if (typeof value === "object") {
-    const entries = Object.entries(value as Record<string, unknown>);
-    if (entries.length === 0) return <span className="text-sand-500">{"{}"}</span>;
-    return (
-      <details open={defaultOpen} className="inline-block w-full">
-        <summary className="cursor-pointer text-sand-500">{"{}"}</summary>
-        <div className="ml-4 border-l border-sand-200 pl-3">
-          {entries.map(([key, val]) => (
-            <div key={key} className="py-0.5">
-              <span className="text-sienna-500 font-medium">{key}</span>
-              <span className="text-sand-400">: </span>
-              <JsonValue value={val} defaultOpen />
-            </div>
-          ))}
-        </div>
-      </details>
-    );
-  }
-  return <span>{String(value)}</span>;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -168,9 +113,13 @@ function FormattedContent({ text, markdown }: { text: string; markdown?: boolean
         </button>
       </div>
       {mode === "pretty" ? (
-        <div className="text-sm font-mono leading-relaxed">
-          <JsonValue value={parsed} />
-        </div>
+        <JsonView
+          value={parsed as object}
+          style={lightTheme}
+          displayDataTypes={false}
+          enableClipboard
+          collapsed={false}
+        />
       ) : (
         <pre className="text-sm text-sand-800 whitespace-pre-wrap wrap-break-word font-mono leading-relaxed">
           {JSON.stringify(parsed, null, 2)}

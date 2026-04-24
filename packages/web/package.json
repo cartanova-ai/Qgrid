@@ -16,6 +16,7 @@
     "@tailwindcss/typography": "catalog:",
     "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-router": "1.143.11",
+    "@uiw/react-json-view": "catalog:",
     "axios": "^1.13.2",
     "better-auth": "~1.4.18",
     "clsx": "^2.1.1",
