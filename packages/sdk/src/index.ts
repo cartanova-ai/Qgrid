@@ -33,14 +33,24 @@ export class QgridError extends Error {
   }
 }
 
-const jsonSchemaCache = new WeakMap<z.ZodType, string>();
-function getJsonSchemaString(schema: z.ZodType): string {
+type SchemaCacheEntry = { json: string; wrapped: boolean };
+const jsonSchemaCache = new WeakMap<z.ZodType, SchemaCacheEntry>();
+
+// Anthropic structured output (`--json-schema`) 은 top-level type 이 반드시 "object" 여야 함.
+// z.enum / z.array / z.string 같은 primitive/array 스키마는 거부됨 (400 invalid_request_error).
+// 그래서 top-level 이 object 가 아니면 `{ result: <orig> }` 로 자동 wrap 하고,
+// 응답 받을 때 `parsed.result` 만 꺼내 검증한다 (caller 입장에선 동일 동작).
+function getJsonSchema(schema: z.ZodType): SchemaCacheEntry {
   let cached = jsonSchemaCache.get(schema);
   if (!cached) {
-    // `$schema` / `additionalProperties` 같은 (openAPI json spec)메타 필드는 Anthropic `--json-schema` 가
     const raw = z.toJSONSchema(schema) as Record<string, unknown>;
+    // `$schema` 메타 필드는 Anthropic `--json-schema` 가 거부 → 제거
     const { $schema: _s, ...rest } = raw;
-    cached = JSON.stringify(rest);
+    const wrapped = rest.type !== "object";
+    const finalSchema = wrapped
+      ? { type: "object", properties: { result: rest }, required: ["result"] }
+      : rest;
+    cached = { json: JSON.stringify(finalSchema), wrapped };
     jsonSchemaCache.set(schema, cached);
   }
   return cached;
@@ -66,12 +76,18 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
 
   // returnType 있으면 CLI 의 --json-schema 를 사용. schema 가 system prompt 에 들어가지 않고
   // Anthropic API 의 structured output (tool) 로 네이티브 전달됨 → prefix cache 절감, 파싱 실패 없음.
-  const jsonSchema = returnType ? getJsonSchemaString(returnType) : undefined;
+  const schemaEntry = returnType ? getJsonSchema(returnType) : undefined;
 
   const res = await fetch(`${url}/api/qgrid/query`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ prompt, system, model: cliModel, projectName, jsonSchema }),
+    body: JSON.stringify({
+      prompt,
+      system,
+      model: cliModel,
+      projectName,
+      jsonSchema: schemaEntry?.json,
+    }),
     signal: AbortSignal.timeout(timeout),
   });
   if (!res.ok) {
@@ -83,14 +99,16 @@ export async function queryQgrid<T extends z.ZodType | undefined = undefined>(pa
   }
 
   const { text, ...rest } = await res.json();
-  if (!returnType) {
+  if (!returnType || !schemaEntry) {
     return { ...rest, data: text } as any;
   }
 
   // structured output 은 서버가 이미 JSON 문자열로 직렬화해서 넘겨줌. 파싱 + zod 검증만.
+  // wrap 된 경우 (top-level 이 object 가 아니었던 schema) 는 `result` 필드만 꺼내 검증.
   try {
     const parsed = JSON.parse(text);
-    return { ...rest, data: z.parse(returnType, parsed) } as any;
+    const unwrapped = schemaEntry.wrapped ? parsed.result : parsed;
+    return { ...rest, data: z.parse(returnType, unwrapped) } as any;
   } catch (e) {
     throw new QgridError(
       "PARSE_FAILED",
