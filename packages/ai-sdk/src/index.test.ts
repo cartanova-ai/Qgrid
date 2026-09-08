@@ -1379,6 +1379,10 @@ describe("qgrid AI SDK provider", () => {
 
   it("passes imageGenerationOptions through to qgrid", async () => {
     let queryBody: unknown;
+    const generation = {
+      route: "codex-images", model: "gpt-image-2", quality: "medium", size: "1254x1254",
+      background: "transparent", usage: { input_tokens: 10, output_tokens: 100, total_tokens: 110 },
+    };
     vi.stubGlobal(
       "fetch",
       vi.fn(async (url: string, init?: RequestInit) => {
@@ -1387,7 +1391,7 @@ describe("qgrid AI SDK provider", () => {
           return new Response(
             JSON.stringify({
               text: "",
-              content: [{ type: "image", data: "iVBORw0KGgoBAgM", revisedPrompt: "a red circle" }],
+              content: [{ type: "image", data: "iVBORw0KGgoBAgM", revisedPrompt: "a red circle", generation }],
               finishReason: "stop",
               model: "gpt-5.5",
               usage,
@@ -1401,20 +1405,25 @@ describe("qgrid AI SDK provider", () => {
       }),
     );
 
-    await qgrid("openai/gpt-5.5").doGenerate({
+    const result = await qgrid("openai/gpt-5.5").doGenerate({
       prompt: [{ role: "user", content: [{ type: "text", text: "draw a red circle" }] }],
       providerOptions: {
         qgrid: {
           imageGeneration: true,
-          imageGenerationOptions: { quality: "high", size: "1024x1024" },
+          imageGenerationOptions: { quality: "high", size: "1024x1024", background: "transparent" },
         },
       },
     } as never);
 
     expect((queryBody as { args: Record<string, unknown> }).args).toMatchObject({
       imageGeneration: true,
-      imageGenerationOptions: { quality: "high", size: "1024x1024" },
+      imageGenerationOptions: { quality: "high", size: "1024x1024", background: "transparent" },
     });
+    expect(result.content).toContainEqual({
+      type: "file", mediaType: "image/png", data: "iVBORw0KGgoBAgM",
+      providerMetadata: { qgrid: { imageGeneration: generation } },
+    });
+    expect(result.providerMetadata?.qgrid?.imageGeneration).toEqual([{ contentIndex: 0, ...generation }]);
   });
 
   it("sends reference image file parts as qgrid multimodal input", async () => {

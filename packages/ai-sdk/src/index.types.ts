@@ -74,6 +74,8 @@ export type QgridOpenAIProviderOptions = QgridCommonProviderOptions & {
   imageGenerationOptions?: {
     quality?: "low" | "medium" | "high";
     size?: "1024x1024" | "1024x1536" | "1536x1024";
+    /** Transparent uses Codex standalone Images and validates PNG alpha. See README for limits. */
+    background?: "auto" | "opaque" | "transparent";
   };
 };
 
@@ -144,13 +146,34 @@ export type QgridSupportedModel =
   | "anthropic/claude-opus-4-8"
   | "anthropic/claude-opus-5";
 
+/** Observed image response values. Usage is response-level and appears on the first image only. */
+export type QgridImageGenerationMetadata = {
+  route: "codex-images";
+  model: "gpt-image-2";
+  background?: string;
+  quality?: string;
+  size?: string;
+  usage?: {
+    input_tokens: number;
+    output_tokens: number;
+    total_tokens: number;
+    input_tokens_details?: { image_tokens: number; text_tokens: number; cached_tokens?: number };
+    output_tokens_details?: { image_tokens: number; text_tokens: number };
+  };
+};
+
 // 아래 타입들은 Qgrid에서 생성된 type을 그대로 가져와서 사용합니다.
 export type QueryOutput = {
   text: string;
   content?: Array<
     | { type: "text"; text: string }
     | { type: "tool-call"; toolCallId: string; toolName: string; input: string }
-    | { type: "image"; data: string; revisedPrompt?: string | null }
+    | {
+        type: "image";
+        data: string;
+        revisedPrompt?: string | null;
+        generation?: QgridImageGenerationMetadata;
+      }
   >;
   finishReason?: "stop" | "tool-calls";
   model: string;

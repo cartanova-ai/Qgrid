@@ -547,6 +547,38 @@ describe("qgrid run lifecycle TTFT", () => {
     );
   });
 
+  it("keeps standalone image accounting out of text usage and records response usage once", async () => {
+    const generation = {
+      route: "codex-images" as const, model: "gpt-image-2" as const,
+      size: "1254x1254", quality: "medium", background: "transparent",
+    };
+    aggregateStepUsageMock.mockResolvedValueOnce({
+      input_tokens: 0, output_tokens: 0, cache_read_tokens: 0, cache_creation_tokens: 0,
+      duration_ms: 120, fallback_count: 0, cost_usd: 0, cost_source: "pricing_table",
+    });
+    await afterQuery(10, 0, {
+      prompt: "draw", model: "openai/gpt-5.5", imageGeneration: true,
+      imageGenerationOptions: { quality: "high", size: "1024x1024", background: "transparent" },
+    }, queryOutput({
+      model: "gpt-image-2", requestedModel: "gpt-5.5", costUsd: 0,
+      usage: { input_tokens: 0, output_tokens: 0, reasoning_tokens: 0, cache_creation_input_tokens: 0, cache_read_input_tokens: 0 },
+      content: [
+        { type: "image", data: "first", generation: { ...generation, usage: {
+          input_tokens: 10, output_tokens: 100, total_tokens: 110,
+        } } },
+        { type: "image", data: "second", generation },
+      ],
+    }));
+    expect(appendStepMock).toHaveBeenCalledWith(10, expect.objectContaining({
+      type: "generate", model_name: "openai/gpt-image-2", requested_model_name: "openai/gpt-5.5",
+      input_tokens: 0, output_tokens: 0, cost_usd: 0,
+    }));
+    expect(finishRunMock).toHaveBeenCalledWith(10, expect.objectContaining({
+      input_tokens: 0, output_tokens: 0, cost_usd: 0, image_cost_usd: 3_080,
+      image_cost_method: "estimated:gpt-image-2:reported-usage:public-prices:conservative",
+    }));
+  });
+
   it("uses requested image quality and size for cost estimate", async () => {
     await afterQuery(
       10,

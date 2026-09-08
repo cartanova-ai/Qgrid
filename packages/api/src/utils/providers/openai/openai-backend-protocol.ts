@@ -1,5 +1,6 @@
 import os from "node:os";
 
+import { type ImageGenerationMetadata } from "../../../application/qgrid/qgrid.types";
 import { type OpenAIEffort } from "../common/effort";
 
 export const CHATGPT_CODEX_RESPONSES_URL =
@@ -170,7 +171,14 @@ export interface OpenAIUsage {
 export type OpenAINormalizedEvent =
   | { type: "created"; responseId?: string }
   | { type: "text-delta"; text: string }
-  | { type: "image"; id?: string; base64: string; mimeType: "image/png"; revisedPrompt?: string }
+  | {
+      type: "image";
+      id?: string;
+      base64: string;
+      mimeType: "image/png";
+      revisedPrompt?: string;
+      generation?: ImageGenerationMetadata;
+    }
   | { type: "output-item"; item: OpenAIResponseItem }
   | { type: "completed"; responseId: string; usage?: OpenAIUsage; model?: string }
   | { type: "error"; error: OpenAIProtocolError };

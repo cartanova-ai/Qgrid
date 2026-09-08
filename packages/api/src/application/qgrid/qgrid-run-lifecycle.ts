@@ -242,7 +242,7 @@ export async function afterQuery(
         image_cost_usd: imageCostMicroUsd,
         image_cost_method:
           imageCostMicroUsd !== null
-            ? imageGenerationCostMethod(args.imageGenerationOptions)
+            ? imageGenerationCostMethod(args.imageGenerationOptions, result)
             : null,
         history: filterHistoryForStorage(args.history),
       });

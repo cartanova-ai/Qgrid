@@ -326,7 +326,8 @@ Content-Type: application/json
     "imageGeneration": false,
     "imageGenerationOptions": {
       "quality": "low",
-      "size": "1024x1024"
+      "size": "1024x1024",
+      "background": "auto"
     }
   }
 }
@@ -388,7 +389,8 @@ Content-Type: application/json
     "imageGeneration": false,
     "imageGenerationOptions": {
       "quality": "low",
-      "size": "1024x1024"
+      "size": "1024x1024",
+      "background": "auto"
     }
   }
 }

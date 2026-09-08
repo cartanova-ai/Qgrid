@@ -4,7 +4,10 @@
  * MVP 에서는 stream() 만. getRateLimits(), listModels() 는 future.
  */
 
-import { type ImageGenerationOptions } from "../../../application/qgrid/qgrid.types";
+import {
+  type ImageGenerationMetadata,
+  type ImageGenerationOptions,
+} from "../../../application/qgrid/qgrid.types";
 import { type JsonValue, type TokenUsageBreakdown, type UserInput } from "./provider-types";
 
 // qgrid provider 내부 표준 usage. provider 전용 cache write 세부 필드는 여기서 확장해 보존한다.
@@ -27,6 +30,7 @@ export interface ReuseThreadCoord {
 export interface GeneratedImage {
   data: string; // base64 PNG
   revisedPrompt: string | null;
+  generation?: ImageGenerationMetadata;
 }
 
 // Provider/런타임이 요청 모델 대신 다른 모델로 실제 응답을 생성한 이력.

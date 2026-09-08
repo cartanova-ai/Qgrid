@@ -220,7 +220,7 @@ const { text } = await generateText({
 | `serviceTier` | `string` | OpenAI only | OpenAI/codex service tier |
 | `timeoutMs` | positive integer, max `1_800_000` | Anthropic only | Server-side Claude Code process timeout in milliseconds. The SDK's non-stream HTTP budget is 60 seconds longer. Defaults to 240 seconds |
 | `imageGeneration` | `boolean` | OpenAI only, non-stream | Enables codex's built-in `image_generation` tool (see [below](#image-generation)) |
-| `imageGenerationOptions` | `{ quality?, size? }` | OpenAI only | Image quality/size hints. `quality: "low" \| "medium" \| "high"`, `size: "1024x1024" \| "1024x1536" \| "1536x1024"` (defaults: `medium` / `1536x1024`) |
+| `imageGenerationOptions` | `{ quality?, size?, background? }` | OpenAI only | Image controls; `background: "transparent"` selects standalone Images. Read actual size/quality from response metadata ([below](#image-generation)). |
 | `fallbackModels` | `string[]` | reserved | Reserved for future qgrid server-side fallback routing. Not functional yet and unrelated to Claude Code's Fable refusal fallback |
 
 ```typescript
@@ -261,7 +261,7 @@ const { text } = await generateText({
 
 ### Image Generation
 
-OpenAI/codex route only, `generateText` only. Enables codex's built-in `image_generation` tool for that single request and returns the image through the AI SDK `files`.
+OpenAI/codex route only, `generateText` only. Enables image generation for that single request and returns the image through AI SDK `files`. Transparent backgrounds use standalone Codex Images; other requests use the hosted `image_generation` tool.
 
 ```typescript
 const result = await generateText({
@@ -300,6 +300,36 @@ const result = await generateText({
 - Image-generation requests do not retain provider conversation state. Their full input is sent directly.
 - Reference images are sent as JSON data URLs. Compress or resize large photos before passing them in; oversized base64 inputs are rejected by the SDK. WebP/JPEG is recommended for photos.
 - The image cost is an **estimate** based on the public `gpt-image-2` price table, recorded separately as `image_cost_usd` on the request log (codex does not expose exact image-tool usage).
+- `imageGenerationOptions.background` accepts `"auto" | "opaque" | "transparent"`. Only `"transparent"` uses Codex's standalone `images/generations` or `images/edits` endpoint with the existing ChatGPT subscription token. Other image requests keep the hosted Responses tool. The transparent route runs `gpt-image-2` directly, without a text driver; it rejects tools and structured output. It accepts up to five reference images and preserves PNG bytes. Fully opaque, entirely empty, or invalid PNG results fail explicitly; there is no background-removal fallback.
+- Transparent image output metadata is available in `result.providerMetadata.qgrid.imageGeneration` (an array containing `contentIndex`, `model`, `route`, `size`, `quality`, `background`, and optional image `usage`). Per-file metadata also appears on `result.content` file parts, not on `result.files[]`. Request options are hints: a live `1024x1024`/`high` request returned `1254x1254`/`medium`. qgrid reports the actual PNG dimensions and does not resize it.
+- On the transparent route, regular token usage/cost is zero because no text driver ran. Image usage is preserved separately and `image_cost_usd` is an API-price estimate from reported usage, with known text/image input splits and conservative pricing for unknown input. It omits cache discounts and is not subscription billing.
+- Explicit image options are recorded as `requestedOptions` in the synthetic image tool log, separately from `pricingAssumption`. When size/quality are omitted, the `1536x1024`/`medium` pricing defaults do not establish actual output dimensions or quality.
+
+Transparent generation example (requires a server and SDK containing this feature):
+
+```typescript
+import { generateText } from "ai";
+import { qgrid, type QgridProviderOptions } from "@cartanova/qgrid-ai-sdk";
+
+const result = await generateText({
+  model: qgrid("openai/gpt-5.5", { projectName: "deti" }),
+  prompt: "An isolated character. Everything outside the character must be transparent, with no backdrop or checkerboard.",
+  providerOptions: {
+    qgrid: {
+      imageGeneration: true,
+      imageGenerationOptions: {
+        background: "transparent",
+        quality: "high",
+        size: "1024x1536",
+      },
+    } satisfies QgridProviderOptions,
+  },
+});
+const png = result.files[0];
+const observed = result.providerMetadata?.qgrid?.imageGeneration;
+```
+
+Remove green-screen or other background instructions when requesting transparency. Preserve the returned PNG alpha when saving; exact final dimensions require an explicit downstream crop/resize policy.
 
 ## Telemetry Logger
 

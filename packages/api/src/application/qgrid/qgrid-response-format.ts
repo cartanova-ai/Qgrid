@@ -2,7 +2,12 @@ import {
   CODEX_IMAGE_GENERATION_MODEL,
   resolveImageGenerationOptions,
 } from "./qgrid-image-generation";
-import { type QgridContent, type QueryInput, type QueryOutput } from "./qgrid.types";
+import {
+  type ImageGenerationMetadata,
+  type QgridContent,
+  type QueryInput,
+  type QueryOutput,
+} from "./qgrid.types";
 
 export const CODEX_IMAGE_GENERATION_TOOL_CONFIG = {
   type: "image_generation",
@@ -42,7 +47,7 @@ export function formatImagePartForLog(image: Extract<QgridContent, { type: "imag
 
 export function imageGenerationToolArgs(
   args: QueryInput,
-  options: { includeInputImages?: boolean } = {},
+  options: { includeInputImages?: boolean; generation?: ImageGenerationMetadata } = {},
 ): string {
   const resolved = resolveImageGenerationOptions(args.imageGenerationOptions);
   const inputImages =
@@ -52,11 +57,16 @@ export function imageGenerationToolArgs(
     ...(inputImages.length > 0 ? { inputImages } : {}),
     driverModel: args.model ?? null,
     tool: CODEX_IMAGE_GENERATION_TOOL_CONFIG,
-    pricingAssumption: {
-      model: CODEX_IMAGE_GENERATION_MODEL,
-      quality: resolved.quality,
-      size: resolved.size,
-    },
+    ...(args.imageGenerationOptions ? { requestedOptions: args.imageGenerationOptions } : {}),
+    ...(options.generation
+      ? { observedGeneration: options.generation }
+      : {
+          pricingAssumption: {
+            model: CODEX_IMAGE_GENERATION_MODEL,
+            quality: resolved.quality,
+            size: resolved.size,
+          },
+        }),
   });
 }
 
@@ -75,18 +85,16 @@ export function buildImageGenerationToolSteps(
 }> {
   if (images.length === 0) return [];
 
-  const firstToolArgs = imageGenerationToolArgs(args, { includeInputImages: true });
-  const laterToolArgs =
-    images.length > 1
-      ? imageGenerationToolArgs(args, { includeInputImages: false })
-      : firstToolArgs;
   return images.map((image, index) => ({
     step_index: stepIndex,
     type: "tool_call",
     tool_call_index: index,
     tool_call_id: `image_generation:${stepIndex}:${index}`,
     tool_name: "image_generation",
-    tool_args: index === 0 ? firstToolArgs : laterToolArgs,
+    tool_args: imageGenerationToolArgs(args, {
+      includeInputImages: index === 0,
+      generation: image.generation,
+    }),
     tool_result: formatImagePartForLog(image),
   }));
 }

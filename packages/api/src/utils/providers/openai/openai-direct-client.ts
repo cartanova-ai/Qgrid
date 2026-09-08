@@ -12,6 +12,10 @@ import {
   type OpenAIResponsesOptions,
   type OpenAIResponsesRequest,
 } from "./openai-backend-protocol";
+import {
+  buildStandaloneImageRequest,
+  readStandaloneImageResponse,
+} from "./openai-image-generation";
 import { normalizeOpenAISSE, type OpenAIEventStream } from "./openai-sse";
 
 export interface OpenAIDirectCredentials {
@@ -446,8 +450,10 @@ export interface OpenAIDirectClientOptions extends OpenAIHttpsTransportOptions {
 
 export class OpenAIDirectClient {
   private readonly transport: OpenAIResponsesTransport;
+  private imageCredentials: OpenAIDirectCredentials;
 
-  constructor(options: OpenAIDirectClientOptions) {
+  constructor(private readonly options: OpenAIDirectClientOptions) {
+    this.imageCredentials = options.credentials;
     this.transport =
       options.transport ??
       (options.transportKind === "websocket"
@@ -456,6 +462,12 @@ export class OpenAIDirectClient {
   }
 
   responses(options: OpenAIResponsesOptions, signal?: AbortSignal): OpenAIEventStream {
+    if (
+      typeof options.imageGeneration === "object" &&
+      options.imageGeneration.background === "transparent"
+    ) {
+      return this.standaloneImages(options, signal);
+    }
     const clientRequestId = crypto.randomUUID();
     const affinityId = options.promptCacheKey
       ? cacheAffinityUuid(options.promptCacheKey)
@@ -470,6 +482,41 @@ export class OpenAIDirectClient {
       threadId: affinityId,
       clientRequestId,
     });
+  }
+
+  private async *standaloneImages(
+    options: OpenAIResponsesOptions,
+    signal?: AbortSignal,
+  ): OpenAIEventStream {
+    const request = buildStandaloneImageRequest(options);
+    const requestId = crypto.randomUUID();
+    for (let attempt = 0; attempt < 2; attempt++) {
+      signal?.throwIfAborted();
+      const response = await (this.options.fetch ?? fetch)(request.url, {
+        method: "POST",
+        headers: {
+          ...buildCodexIdentityHeaders(
+            this.imageCredentials.accessToken,
+            this.imageCredentials.accountId,
+          ),
+          Accept: "application/json",
+          "x-codex-image-turn-id": requestId,
+        },
+        body: JSON.stringify(request.body),
+        signal,
+      });
+      if (response.status === 401 && attempt === 0 && this.options.refreshCredentials) {
+        await response.body?.cancel();
+        this.imageCredentials = await this.options.refreshCredentials();
+        continue;
+      }
+      if (!response.ok) throw await responseError(response);
+      const images = await readStandaloneImageResponse(response);
+      signal?.throwIfAborted();
+      yield* images;
+      yield { type: "completed", responseId: requestId, model: "gpt-image-2" };
+      return;
+    }
   }
 
   close(): void {

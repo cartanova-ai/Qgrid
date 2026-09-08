@@ -56,6 +56,24 @@ describe("applyToolCallEmulation image parts", () => {
     });
     expect(out.content).toEqual([{ type: "text", text: "here is your image" }]);
   });
+
+  it("preserves observed image settings and attaches response usage only once", () => {
+    const generation = {
+      route: "codex-images" as const, model: "gpt-image-2" as const,
+      size: "1254x1254", quality: "medium", background: "transparent",
+    };
+    const usage = { input_tokens: 10, output_tokens: 100, total_tokens: 110 };
+    const out = applyToolCallEmulation(baseResult, undefined, {
+      answerKind: "text",
+      images: [
+        { ...img, generation: { ...generation, usage } },
+        { ...img, generation },
+      ],
+    });
+    expect(out.content.filter((item) => item.type === "image").map((item) => item.generation))
+      .toEqual([{ ...generation, usage }, generation]);
+    expect(out.usage).toEqual(baseResult.usage);
+  });
 });
 
 describe("applyToolCallEmulation envelope validation", () => {

@@ -221,12 +221,12 @@ Sources:
 
 Key decisions:
 
-- Image generation is OpenAI/Codex-only and request-level opt-in. It is essentially a Codex-hosted `image_generation` tool call, not qgrid directly calling the OpenAI Images API. Always-on image tools would change every turn's tool configuration and threaten prompt-cache stability.
+- Image generation is OpenAI/Codex-only and request-level opt-in. Most requests use the Codex-hosted `image_generation` tool. Explicit transparent backgrounds use Codex standalone Images because the hosted route rejected them in live probes. Always-on image tools would change every turn's tool configuration and threaten prompt-cache stability.
 - It is non-stream only. Codex returns completed base64 image payloads, not useful image deltas.
 - Image turns send full input directly and retain no provider conversation state. This prevents base64 payloads from entering reusable state.
 - qgrid performs preflight capability/model gates and postflight "image count must be greater than zero" checks. Codex can otherwise silently return text when image generation is unavailable or unused.
 - Returned images are inline base64 content parts for consumers and AI SDK `file` parts. Reference images are accepted through AI SDK multimodal message parts only on the `imageGeneration` path, and are transported as JSON data URLs with SDK-side size guarding.
-- `imageGenerationOptions` currently supports quality and size. The worker instruction and request-log pricing assumption use `gpt-image-2`, with defaults `medium` and `1536x1024`.
+- `imageGenerationOptions` supports quality, size, and background. Hosted-route pricing assumptions use `gpt-image-2`, `medium`, and `1536x1024` when omitted; these do not establish actual output settings. Transparent-route image usage and observed settings are recorded separately, and no background-removal fallback is allowed.
 - qgrid does not manage generated or reference images as durable assets through a `generated_images` table or object-storage layer. Current request logs can still contain inline image data URLs for inspection and synthetic `image_generation` tool-call steps; reference input images live in the first synthetic step's `tool_args.inputImages`.
 - Image cost is stored separately in `request_logs.image_cost_usd`; `request_logs.cost_usd` remains the Codex driver model token cost. Because Codex does not expose exact image tool usage, `image_cost_usd` is a price-table estimate and may be inaccurate.
 - Inspect current plans, tests, and implementation before changing behavior; the Codex tool surface can change underneath qgrid.

@@ -184,6 +184,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.20.0(pg-native@3.7.0)
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       radashi:
         specifier: ^12.2.0
         version: 12.7.2
@@ -212,6 +215,9 @@ importers:
       '@types/pg':
         specifier: 'catalog:'
         version: 8.20.0
+      '@types/pngjs':
+        specifier: ^6.0.5
+        version: 6.0.5
       '@types/ws':
         specifier: 8.18.1
         version: 8.18.1
@@ -308,6 +314,9 @@ importers:
       pg:
         specifier: ^8.16.3
         version: 8.20.0(pg-native@3.7.0)
+      pngjs:
+        specifier: ^7.0.0
+        version: 7.0.0
       radashi:
         specifier: ^12.2.0
         version: 12.7.2
@@ -3733,6 +3742,9 @@ packages:
   '@types/pluralize@0.0.33':
     resolution: {integrity: sha512-JOqsl+ZoCpP4e8TDke9W79FDcSgPAR0l6pixx2JHkhnRjvShyYiAYw2LVsnA7K08Y6DeOnaU6ujmENO4os/cYg==}
 
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
+
   '@types/qs@6.15.0':
     resolution: {integrity: sha512-JawvT8iBVWpzTrz3EGw9BTQFg3BQNmwERdKE22vlTxawwtbyUSlMppvZYKLZzB5zgACXdXxbD3m1bXaMqP/9ow==}
 
@@ -5928,6 +5940,10 @@ packages:
   pluralize@8.0.0:
     resolution: {integrity: sha512-Nc3IT5yHzflTfbjgqWcCPpo7DaKy4FnpB0l/zCAW0Tc7jxAiuqSxHasntB3D7887LSrA93kDJ9IXovxJYxyLCA==}
     engines: {node: '>=4'}
+
+  pngjs@7.0.0:
+    resolution: {integrity: sha512-LKWqWJRhstyYo9pGvgor/ivk2w94eSjE3RGVuzLGlr3NmD8bf7RcYGze1mNdEHRP6TRP6rMuDHk5t44hnTRyow==}
+    engines: {node: '>=14.19.0'}
 
   postcss-selector-parser@6.0.10:
     resolution: {integrity: sha512-IQ7TZdoaqbT+LCpShg46jnZVlhWD2w6iQYAcYXfHARZ7X1t/UGhhceQDs5X0cGqKvYlHNOuv7Oa1xmb0oQuA3w==}
@@ -10428,6 +10444,10 @@ snapshots:
 
   '@types/pluralize@0.0.33': {}
 
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 25.0.7
+
   '@types/qs@6.15.0': {}
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
@@ -12689,6 +12709,8 @@ snapshots:
       pathe: 2.0.3
 
   pluralize@8.0.0: {}
+
+  pngjs@7.0.0: {}
 
   postcss-selector-parser@6.0.10:
     dependencies:

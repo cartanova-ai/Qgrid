@@ -12,6 +12,7 @@ const STRUCTURED_ENVELOPE_LIMITS = {
   maxDepth: 132,
 } as const;
 import {
+  type ImageGenerationMetadata,
   type QgridContent,
   type QgridThreadCoord,
   type QgridTool,
@@ -70,6 +71,7 @@ export class ToolCallEmulationError extends Error {
 interface EmulationImage {
   data: string;
   revisedPrompt?: string | null;
+  generation?: ImageGenerationMetadata;
 }
 
 // answer 인코딩 종류. envelope 디코더는 한 벌이고 이 값은 answer 브랜치의 타입과
@@ -212,6 +214,7 @@ function appendImages(content: QgridContent[], images?: EmulationImage[]): Qgrid
         type: "image",
         data: image.data,
         revisedPrompt: image.revisedPrompt ?? null,
+        ...(image.generation ? { generation: image.generation } : {}),
       }),
     ),
   ];

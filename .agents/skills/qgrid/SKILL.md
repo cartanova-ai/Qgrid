@@ -53,7 +53,7 @@ Request logging is enabled by default. Use `providerOptions.qgrid.logger: false`
 - Prefer `getPuri()` for Sonamu model queries. Treat `getDB()` as a legacy escape hatch only when Puri cannot express the required query. Inside `@transactional` methods, all participating queries must use `getPuri()`; `getDB()` does not reuse Sonamu's ambient transaction connection.
 - Never hand-author migration files for Sonamu-managed schema. In the qgrid source repository, change the entity definition, inspect `sonamu migrate status`, and create migration files with `mise exec -- pnpm --dir packages/api sonamu migrate generate`. Inspect the generated files before applying them. If Sonamu cannot express a required schema change, stop and ask rather than silently replacing its workflow with a custom migration.
 - Keep OpenAI Codex built-in tools, apps, plugins, skills, web search, shell, and environment instruction blocks disabled unless the user explicitly asks for agentic Codex behavior.
-- Treat OpenAI image generation as an opt-in Codex `image_generation` tool path. Inspect current code before modifying it; it is not a direct Images API call and its image cost is an estimate.
+- Treat OpenAI image generation as opt-in. Transparent background requests use Codex standalone Images endpoints with subscription credentials; other image requests use the hosted Responses image tool. Inspect current code before modifying either route; image costs remain API-price estimates.
 
 ## Verification
 

@@ -744,6 +744,27 @@ export namespace QgridService {
                 type: "image";
                 data: string;
                 revisedPrompt?: string | null;
+                generation?: {
+                  route: "codex-images";
+                  model: "gpt-image-2";
+                  background?: string;
+                  quality?: string;
+                  size?: string;
+                  usage?: {
+                    input_tokens: number;
+                    output_tokens: number;
+                    total_tokens: number;
+                    input_tokens_details?: {
+                      image_tokens: number;
+                      text_tokens: number;
+                      cached_tokens?: number;
+                    };
+                    output_tokens_details?: {
+                      image_tokens: number;
+                      text_tokens: number;
+                    };
+                  };
+                };
               }[];
           runContext?: {
             requestLogId?: number;
@@ -812,6 +833,27 @@ export namespace QgridService {
               type: "image";
               data: string;
               revisedPrompt?: string | null;
+              generation?: {
+                route: "codex-images";
+                model: "gpt-image-2";
+                background?: string;
+                quality?: string;
+                size?: string;
+                usage?: {
+                  input_tokens: number;
+                  output_tokens: number;
+                  total_tokens: number;
+                  input_tokens_details?: {
+                    image_tokens: number;
+                    text_tokens: number;
+                    cached_tokens?: number;
+                  };
+                  output_tokens_details?: {
+                    image_tokens: number;
+                    text_tokens: number;
+                  };
+                };
+              };
             }[];
         runContext?: {
           requestLogId?: number;

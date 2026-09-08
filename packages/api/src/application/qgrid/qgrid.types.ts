@@ -12,6 +12,36 @@ export const QgridTool = z.object({
 });
 export type QgridTool = z.infer<typeof QgridTool>;
 
+// Observed standalone Images response values, distinct from requested generation hints.
+export const ImageGenerationMetadata = z.object({
+  route: z.literal("codex-images"),
+  model: z.literal("gpt-image-2"),
+  background: z.string().optional(),
+  quality: z.string().optional(),
+  size: z.string().optional(),
+  usage: z
+    .object({
+      input_tokens: z.number().nonnegative(),
+      output_tokens: z.number().nonnegative(),
+      total_tokens: z.number().nonnegative(),
+      input_tokens_details: z
+        .object({
+          image_tokens: z.number().nonnegative(),
+          text_tokens: z.number().nonnegative(),
+          cached_tokens: z.number().nonnegative().optional(),
+        })
+        .optional(),
+      output_tokens_details: z
+        .object({
+          image_tokens: z.number().nonnegative(),
+          text_tokens: z.number().nonnegative(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+export type ImageGenerationMetadata = z.infer<typeof ImageGenerationMetadata>;
+
 export const QgridContent = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("text"),
@@ -28,6 +58,7 @@ export const QgridContent = z.discriminatedUnion("type", [
     // Codex image_generation result base64. qgrid 는 포맷/확장자 책임을 지지 않는다.
     data: z.string(),
     revisedPrompt: z.string().nullish(),
+    generation: ImageGenerationMetadata.optional(),
   }),
 ]);
 export type QgridContent = z.infer<typeof QgridContent>;
@@ -53,6 +84,7 @@ export type ImageGenerationSize = z.infer<typeof ImageGenerationSize>;
 export const ImageGenerationOptions = z.object({
   quality: ImageGenerationQuality.optional(),
   size: ImageGenerationSize.optional(),
+  background: z.enum(["auto", "opaque", "transparent"]).optional(),
 });
 export type ImageGenerationOptions = z.infer<typeof ImageGenerationOptions>;
 

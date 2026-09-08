@@ -46,7 +46,17 @@ export function resolveImageGenerationOptions(
   };
 }
 
-export function imageGenerationCostMethod(options: ImageGenerationOptions | undefined): string {
+export function imageGenerationCostMethod(
+  options: ImageGenerationOptions | undefined,
+  result?: QueryOutput,
+): string {
+  if (
+    result?.content.some(
+      (item) => item.type === "image" && item.generation?.route === "codex-images",
+    )
+  ) {
+    return "estimated:gpt-image-2:reported-usage:public-prices:conservative";
+  }
   const resolved = resolveImageGenerationOptions(options);
   return `assumed:${CODEX_IMAGE_GENERATION_MODEL}:${resolved.quality}:${resolved.size}:png`;
 }
@@ -55,8 +65,28 @@ export function estimateImageGenerationCostMicroUsd(
   result: QueryOutput,
   options: ImageGenerationOptions | undefined,
 ): number | null {
-  const imageCount = result.content.filter((item) => item.type === "image").length;
+  const images = result.content.filter((item) => item.type === "image");
+  const imageCount = images.length;
   if (imageCount === 0) return null;
+  if (images.some((image) => image.generation?.route === "codex-images")) {
+    // The standalone response's aggregate usage is carried by its first image only.
+    // Do not multiply it by output count or price it as the requested text driver.
+    const usage = images.find((image) => image.generation?.usage)?.generation?.usage;
+    if (!usage) return null;
+    // Public GPT Image 2 rates verified 2026-09-08: text input $5/M, image input
+    // $8/M, output $30/M. Amounts below are microUSD, so no /1M conversion.
+    // https://developers.openai.com/api/docs/pricing#image-generation
+    // Use a consistent reported split; unknown input is conservatively priced as
+    // images. Cache discounts and private subscription billing remain unknown.
+    const details = usage.input_tokens_details;
+    const textTokens =
+      details && details.text_tokens + details.image_tokens <= usage.input_tokens
+        ? details.text_tokens
+        : 0;
+    return Math.round(
+      textTokens * 5 + (usage.input_tokens - textTokens) * 8 + usage.output_tokens * 30,
+    );
+  }
   const resolved = resolveImageGenerationOptions(options);
   return imageCount * IMAGE_OUTPUT_COST_MICRO_USD[resolved.quality][resolved.size];
 }

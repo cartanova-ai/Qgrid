@@ -117,6 +117,9 @@ async function deriveCacheAffinityKey(
 }
 
 function qgridProviderMetadata(data: QueryOutput) {
+  const imageGeneration = data.content?.flatMap((item, contentIndex) =>
+    item.type === "image" && item.generation ? [{ contentIndex, ...item.generation }] : [],
+  );
   return {
     qgrid: {
       model: data.model,
@@ -128,6 +131,7 @@ function qgridProviderMetadata(data: QueryOutput) {
       costSource: data.costSource,
       cacheCreation5mInputTokens: data.usage.cache_creation_5m_input_tokens ?? null,
       cacheCreation1hInputTokens: data.usage.cache_creation_1h_input_tokens ?? null,
+      ...(imageGeneration?.length ? { imageGeneration } : {}),
     },
   };
 }
@@ -348,7 +352,14 @@ export function qgrid(modelId: QgridSupportedModel, config?: QgridProviderConfig
             content.push({ type: "text", text: item.text });
           } else if (item.type === "image") {
             // qgrid raw image parts are base64-only; AI SDK file parts require a mediaType.
-            content.push({ type: "file", mediaType: "image/png", data: item.data });
+            content.push({
+              type: "file",
+              mediaType: "image/png",
+              data: item.data,
+              ...(item.generation
+                ? { providerMetadata: { qgrid: { imageGeneration: item.generation } } }
+                : {}),
+            });
           } else if (item.type === "tool-call") {
             content.push({
               type: "tool-call",
@@ -624,6 +635,7 @@ export function qgrid(modelId: QgridSupportedModel, config?: QgridProviderConfig
 
 export { createQgridLogger } from "./logger";
 export type {
+  QgridImageGenerationMetadata,
   QgridAnthropicEffort,
   QgridAnthropicModel,
   QgridAnthropicProviderConfig,

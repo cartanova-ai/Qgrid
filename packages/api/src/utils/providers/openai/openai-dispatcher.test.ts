@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { QuotaThresholdExceededError } from "../../../application/qgrid/qgrid.types";
+import { QueryInput, QuotaThresholdExceededError } from "../../../application/qgrid/qgrid.types";
 import { type GenerateRequest } from "../common/provider-dispatcher";
 import {
+  buildOpenAIResponsesRequest,
   type OpenAINormalizedEvent,
   type OpenAIResponsesOptions,
 } from "./openai-backend-protocol";
@@ -47,6 +48,41 @@ async function tickTimer(): Promise<void> {
 }
 
 describe("OpenAIDispatcher direct runtime", () => {
+  it.each(["transparent", "opaque", "auto"] as const)(
+    "preserves %s background through validation and Responses serialization",
+    async (background) => {
+      const args = QueryInput.parse({
+        model: "openai/gpt-test",
+        prompt: "an isolated red circle",
+        imageGeneration: true,
+        imageGenerationOptions: { background, quality: "high", size: "1024x1024" },
+      });
+      let body: ReturnType<typeof buildOpenAIResponsesRequest> | undefined;
+      const d = dispatcher((options) => {
+        body = buildOpenAIResponsesRequest(options);
+        return events(
+          { type: "image", id: "i", base64: "png", mimeType: "image/png" },
+          { type: "completed", responseId: "r" },
+        );
+      });
+      await d.onTokenAdded(1, "one", credentials);
+      await d.generate(request({
+        imageGeneration: args.imageGeneration,
+        imageGenerationOptions: args.imageGenerationOptions,
+      }));
+      expect(body?.tools).toEqual([{
+        type: "image_generation", background, quality: "high", size: "1024x1024",
+      }]);
+    },
+  );
+
+  it("rejects unsupported image backgrounds", () => {
+    expect(QueryInput.safeParse({
+      prompt: "a circle", imageGeneration: true,
+      imageGenerationOptions: { background: "green" },
+    }).success).toBe(false);
+  });
+
   it("passes the resolved transport to the injectable client factory", async () => {
     const factory = vi.fn(
       (_options: import("./openai-direct-client").OpenAIDirectClientOptions) => ({

@@ -222,6 +222,19 @@ export function extractPromptAndHistory(
             arguments: typeof part.input === "string" ? part.input : JSON.stringify(part.input),
             call_id: part.toolCallId,
           });
+        } else {
+          const url = extractImageUrl(part);
+          if (!url) continue;
+          if (includeImages) {
+            imageUrls.push(url);
+            history.push({
+              type: "message",
+              role: "assistant",
+              content: [{ type: "input_image", image_url: url }],
+            });
+          } else {
+            droppedImageCount++;
+          }
         }
       }
     } else if (msg.role === "tool") {

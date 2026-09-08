@@ -211,7 +211,7 @@ const { text } = await generateText({
 | `serviceTier` | `string` | OpenAI 전용 | OpenAI/codex service tier |
 | `timeoutMs` | 양의 정수, 최대 `1_800_000` | Anthropic 전용 | 서버의 Claude Code 프로세스 제한시간(ms). SDK의 non-stream HTTP 제한은 이 값보다 60초 길게 설정. 기본값은 240초 |
 | `imageGeneration` | `boolean` | OpenAI 전용, non-stream | codex 내장 `image_generation` tool 활성화 ([아래](#image-generation) 참조) |
-| `imageGenerationOptions` | `{ quality?, size? }` | OpenAI 전용 | 이미지 품질/크기 힌트. `quality: "low" \| "medium" \| "high"`, `size: "1024x1024" \| "1024x1536" \| "1536x1024"` (기본: `medium` / `1536x1024`) |
+| `imageGenerationOptions` | `{ quality?, size?, background? }` | OpenAI 전용 | 이미지 생성 옵션. `background: "transparent"`는 전용 경로 사용. 실제 크기·품질은 응답 metadata 확인 ([아래](#image-generation)). |
 | `fallbackModels` | `string[]` | 예약 | 향후 qgrid 서버 fallback routing용 예약 필드. 현재 동작하지 않으며 Claude Code의 Fable refusal fallback과 무관 |
 
 ```typescript
@@ -252,7 +252,7 @@ const { text } = await generateText({
 
 ### Image Generation
 
-OpenAI/codex 경로 전용, `generateText` 전용입니다. 해당 요청에만 codex 내장 `image_generation` tool을 켜고, 결과 이미지를 AI SDK `files`로 받습니다.
+OpenAI/codex 경로 전용, `generateText` 전용입니다. 요청별로 이미지 생성을 활성화하고 결과를 AI SDK `files`로 받습니다. 투명 배경은 Codex 전용 Images 경로를, 그 외에는 내장 `image_generation` 도구를 사용합니다.
 
 ```typescript
 const result = await generateText({
@@ -291,6 +291,12 @@ const result = await generateText({
 - 이미지 생성 요청은 provider 대화 상태를 보관하지 않고 전체 input을 직접 전송합니다.
 - 레퍼런스 이미지는 JSON data URL로 전송됩니다. 큰 사진은 압축하거나 리사이즈해서 전달하세요. 과도하게 큰 base64 입력은 SDK가 거부하며, 사진에는 WebP/JPEG를 권장합니다.
 - 이미지 비용은 `gpt-image-2` 공개 단가표 기반 **추정치**로 request log의 `image_cost_usd`에 별도 기록됩니다 (codex가 정확한 이미지 tool 사용량을 노출하지 않음).
+- `imageGenerationOptions.background`는 `"auto" | "opaque" | "transparent"`를 지원합니다. `"transparent"` 요청만 기존 ChatGPT 구독 토큰으로 Codex 전용 `images/generations` 또는 `images/edits` 경로를 사용합니다. 나머지는 기존 Responses 도구 경로를 유지합니다. 투명 경로는 텍스트 모델 없이 `gpt-image-2`를 직접 실행하며, tools·structured output은 지원하지 않습니다. 레퍼런스는 최대 5장입니다. 불투명·완전 빈 이미지·손상된 PNG는 오류로 처리하고, 별도 배경 제거로 대체하지 않습니다.
+- 실제 출력 정보는 `result.providerMetadata.qgrid.imageGeneration` 배열에 있습니다(`contentIndex`, `model`, `route`, `size`, `quality`, `background`, 이미지 `usage`). `result.content` 파일 파트에도 metadata가 있지만 `result.files[]`에는 없습니다. 실호출에서 `1024x1024`/`high` 요청이 `1254x1254`/`medium`으로 반환됐으므로, 요청값을 최종 출력값으로 간주하면 안 됩니다. qgrid는 실제 PNG 크기를 보고하며 리사이즈하지 않습니다.
+- 투명 경로는 텍스트 모델을 실행하지 않아 일반 토큰 usage·비용이 0입니다. 이미지 usage는 별도로 보존하고, `image_cost_usd`는 보고된 토큰과 공개 API 단가로 추정합니다. 알려진 text/image input은 구분하고 불명확한 input은 보수적으로 계산하며, 캐시 할인은 반영하지 않습니다. 구독 청구액을 뜻하지 않습니다.
+- 명시한 이미지 옵션은 이미지 도구 로그의 `requestedOptions`에 기록하며 `pricingAssumption`과 구분합니다. 옵션 생략 시 비용 추정에 쓰는 `1536x1024`/`medium`은 실제 출력 크기·품질의 기본값을 보장하지 않습니다.
+
+투명 생성은 위 `imageGenerationOptions`에 `background: "transparent"`를 추가하고, 프롬프트에도 피사체 밖의 투명 배경을 명시하세요. 크로마키·배경색 지시는 제거해야 합니다. 이 기능이 포함된 서버와 SDK가 모두 필요하며, 저장 시 PNG 알파를 유지하세요. 정확한 최종 크기는 소비 앱의 명시적인 crop/resize 정책으로 처리합니다.
 
 ## Telemetry Logger
 

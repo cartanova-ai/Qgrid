@@ -318,7 +318,11 @@ export class OpenAIDispatcher implements ProviderDispatcher {
           onDelta?.(event.text);
         } else if (event.type === "image") {
           imageAttempted = true;
-          images.push({ data: event.base64, revisedPrompt: event.revisedPrompt ?? null });
+          images.push({
+            data: event.base64,
+            revisedPrompt: event.revisedPrompt ?? null,
+            ...(event.generation ? { generation: event.generation } : {}),
+          });
         } else if (event.type === "output-item" && event.item.type === "image_generation_call") {
           imageAttempted = true;
         } else if (event.type === "completed" && event.usage) {
@@ -356,6 +360,7 @@ export class OpenAIDispatcher implements ProviderDispatcher {
       durationMs: Date.now() - startedAt,
       ttftMs: firstDeltaAt === undefined ? null : firstDeltaAt - startedAt,
       model: servingModel,
+      ...(servingModel !== req.model ? { requestedModel: req.model } : {}),
       threadCoord: { workerId: selection.tokenId, threadId: req.promptCacheKey ?? "", epoch: -1 },
       ...(images.length ? { images } : {}),
     };
